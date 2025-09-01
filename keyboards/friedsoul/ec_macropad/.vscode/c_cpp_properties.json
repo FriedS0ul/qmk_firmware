@@ -1,0 +1,24 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "D:/QMK/quantum",
+                "D:/QMK/tmk_core",
+                "D:\\QMK\\platforms\\avr\\drivers",
+                "D:\\QMK\\platforms\\chibios",
+                "D:\\QMK\\platforms\\avr",
+                "D:\\QMK\\platforms",
+                "D:/QMK/platforms/test"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "intelliSenseMode": "${default}"
+        }
+    ],
+    "version": 4
+}

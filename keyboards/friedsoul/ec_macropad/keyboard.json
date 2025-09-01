@@ -13,7 +13,7 @@
         "command": false
     },
     "matrix_pins": {
-        "cols": ["null", "null", "null"],
+        "cols": ["F0", "F1", "F4"],
         "rows": ["D4", "D6", "D7"]
     },
     "processor": "atmega32u4",
