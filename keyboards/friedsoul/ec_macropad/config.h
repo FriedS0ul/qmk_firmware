@@ -9,9 +9,6 @@
 #define MATRIX_ROW_PINS {D4, D6, D7}
 
 // AMUX
-#define Amux_channel_max
-#define Amux_channel_in_use
-
 #define AMUX_SEL_PINS {F4, F5, F6}
 #define AMUX_EN_PINS B6
 #define AMUX_COL_TO_CHANNEL_ORDER {0, 1, 2}

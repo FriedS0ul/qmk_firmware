@@ -10,7 +10,8 @@
                 "D:\\QMK\\platforms\\chibios",
                 "D:\\QMK\\platforms\\avr",
                 "D:\\QMK\\platforms",
-                "D:/QMK/platforms/test"
+                "D:/QMK/platforms/test",
+                "D:/QMK/quantum/keymap_extras"
             ],
             "defines": [
                 "_DEBUG",

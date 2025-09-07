@@ -4,6 +4,7 @@
     "maintainer": "fries0ul",
     "bootloader": "caterina",
     "diode_direction": "COL2ROW",
+
     "features": {
         "bootmagic": true,
         "extrakey": true,
@@ -12,10 +13,7 @@
         "console": true,
         "command": false
     },
-    "matrix_pins": {
-        "cols": ["F0", "F1", "F4"],
-        "rows": ["D4", "D6", "D7"]
-    },
+
     "processor": "atmega32u4",
     "url": "",
     "usb": {
