@@ -5,7 +5,9 @@
         "iom32u4.h": "c",
         "quantum.h": "c",
         "atomic_util.h": "c",
-        "quantum_keycodes.h": "c"
+        "quantum_keycodes.h": "c",
+        "analog.h": "c",
+        "keyboard.h": "c"
     },
     "C_Cpp.default.compilerPath": "d:\\QMK_MSYS\\mingw64\\bin\\avr-gcc.exe"
 }

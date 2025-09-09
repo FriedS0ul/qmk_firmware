@@ -7,11 +7,15 @@
                 "D:/QMK/quantum",
                 "D:/QMK/tmk_core",
                 "D:\\QMK\\platforms\\avr\\drivers",
+                "D:\\QMK_MSYS\\mingw64\\avr\\include\\avr",
                 "D:\\QMK\\platforms\\chibios",
                 "D:\\QMK\\platforms\\avr",
                 "D:\\QMK\\platforms",
                 "D:/QMK/platforms/test",
-                "D:/QMK/quantum/keymap_extras"
+                "D:/QMK/quantum/keymap_extras",
+                "D:/QMK/qmk_firmware/platforms/avr",
+                "D:\\QMK_MSYS\\mingw64\\avr\\include",
+                "D:\\QMK\\qmk_firmware\\quantum"
             ],
             "defines": [
                 "_DEBUG",
@@ -19,6 +23,20 @@
                 "_UNICODE"
             ],
             "intelliSenseMode": "${default}"
+        },
+        {
+            "name": "gcc.exe",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "D:\\QMK_MSYS\\ucrt64\\include",
+                "D:\\QMK\\qmk_firmware\\platforms\\avr"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "compilerPath": "D:\\QMK_MSYS\\ucrt64\\bin\\gcc.exe"
         }
     ],
     "version": 4
