@@ -7,10 +7,9 @@
 #include <avr/iom32u4.h>
 #include <quantum.h>
 #include <gpio.h>
+#include <print.h>
 
 
-extern matrix_row_t raw_matrix[MATRIX_ROWS];
-extern matrix_row_t matrix[MATRIX_ROWS];
 
 // Инициализация АЦП
 void adc_init(void){
@@ -38,25 +37,40 @@ void matrix_init_custom(void){
     pins_init();
     adc_init();
 
-    gpio_write_pin_low(AMUX_EN_PINS);
-    gpio_write_pin_low(F4);
-    gpio_write_pin_low(F5);
-    gpio_write_pin_low(F6);
-
-
-
-
-
+    
 }
 
 
 //Matrix scanning process
 bool matrix_scan_custom(matrix_row_t current_matrix[]){
+    bool matrix_has_changed = true;
+
+    gpio_write_pin_low(AMUX_EN_PINS); // Включаем мультиплексор и выставляем каналы в 0 0 0
+
+    for (uint8_t i = 0; i < (sizeof(AMUX_SEL_PINS) / sizeof(AMUX_SEL_PINS[0])); i++)
+    {
+        gpio_write_pin_low(AMUX_SEL_PINS[i]); // ставим AMUX_SEL_PINS в low
+    }
     
-    bool matrix_has_changed = false;
+    wait_us(10);
 
+    gpio_write_pin_high(D4); //Включаем зарядку ряда
+    wait_us(100);
+    gpio_write_pin_low(D4); // Отключаем зарядку ряда
 
+    wait_us(10);
 
+    ADCSRA |= (1 << ADSC);// Включение чтения ацп
+    while (ADCSRA & (1 << ADSC)){
+
+        // Ждем автоматического завершения чтения
+
+    }
+    //uint16_t result = (ADCL) | (ADCH << 8);
+    uint16_t adc_readings = ADC;
+
+    uprintf("%u\n", adc_readings);
 
     return matrix_has_changed;
+
 }

@@ -7,6 +7,7 @@
                 "D:/QMK/quantum",
                 "D:/QMK/tmk_core",
                 "D:\\QMK\\platforms\\avr\\drivers",
+                "D:\\QMK\\qmk_firmware\\platforms",
                 "D:\\QMK_MSYS\\mingw64\\avr\\include\\avr",
                 "D:\\QMK\\platforms\\chibios",
                 "D:\\QMK\\platforms\\avr",
@@ -15,7 +16,8 @@
                 "D:/QMK/quantum/keymap_extras",
                 "D:/QMK/qmk_firmware/platforms/avr",
                 "D:\\QMK_MSYS\\mingw64\\avr\\include",
-                "D:\\QMK\\qmk_firmware\\quantum"
+                "D:\\QMK\\qmk_firmware\\quantum",
+                "D:/QMK/qmk_firmware/quantum/logging"
             ],
             "defines": [
                 "_DEBUG",
