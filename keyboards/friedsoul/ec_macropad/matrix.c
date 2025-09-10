@@ -3,8 +3,8 @@
 #include <matrix.h>
 #include "config.h"
 #include <drivers/analog.h>
+//#include <avr/iom32u4.h>
 #include <avr/io.h>
-#include <avr/iom32u4.h>
 #include <quantum.h>
 #include <gpio.h>
 #include <print.h>
@@ -47,10 +47,9 @@ bool matrix_scan_custom(matrix_row_t current_matrix[]){
 
     gpio_write_pin_low(AMUX_EN_PINS); // Включаем мультиплексор и выставляем каналы в 0 0 0
 
-    for (uint8_t i = 0; i < (sizeof(AMUX_SEL_PINS) / sizeof(AMUX_SEL_PINS[0])); i++)
-    {
-        gpio_write_pin_low(AMUX_SEL_PINS[i]); // ставим AMUX_SEL_PINS в low
-    }
+    gpio_write_pin_low(F4);
+    gpio_write_pin_low(F5);
+    gpio_write_pin_low(D4);
     
     wait_us(10);
 
