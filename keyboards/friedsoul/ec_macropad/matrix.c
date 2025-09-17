@@ -82,13 +82,12 @@ bool matrix_scan_custom(matrix_row_t current_matrix[]){
             uint16_t adc_readings = ADC; // Смотрим прочитанное значение
             uprintf("Row %d, Col %d: %u\r\n", row, col, adc_readings);
 
-            wait_ms(50); // Снижаем частоту опроса до 100Гц для тестов
-
+            
         }
 
         gpio_set_pin_input(row_pins[row]); // Ставим пин как вход
 
-        wait_us(100); // Ждем разрядку ряда
+        wait_ms(50); // Снижаем частоту опроса для тестов
 
     }
     
