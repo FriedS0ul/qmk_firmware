@@ -14,10 +14,9 @@
                 "D:\\QMK\\platforms",
                 "D:/QMK/platforms/test",
                 "D:/QMK/quantum/keymap_extras",
-                "D:/QMK/qmk_firmware/platforms/avr",
+                "D:/QMK/platforms/avr",
                 "D:\\QMK_MSYS\\mingw64\\avr\\include",
-                "D:\\QMK\\qmk_firmware\\quantum",
-                "D:/QMK/qmk_firmware/quantum/logging"
+                "D:/QMK/quantum/logging"
             ],
             "defines": [
                 "_DEBUG",

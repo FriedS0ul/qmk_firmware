@@ -89,7 +89,7 @@ bool matrix_scan_custom(matrix_row_t current_matrix[]){
             gpio_write_pin(F5, (col >> 1) & 1);
             gpio_write_pin(D4, (col >> 2) & 1);
             
-            uint16_t adc_readings = adc_read(adcMux); // Смотрим прочитанное значение
+            uint16_t adc_readings = adc_read(adcMux); // Читаем и записываем в переменную
 
             uprintf("Row %d, Col %d: %u\r\n", row, col, adc_readings); // Выводим полученные значения в HID консоль
         }
