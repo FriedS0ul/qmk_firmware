@@ -1,21 +1,16 @@
 
-
 #include <quantum.h>
 #include "config.h"
 #include <matrix.h>
-#include <drivers/analog.h>
 //#include <avr/iom32u4.h>
 #include <avr/io.h>
 #include <gpio.h>
 #include <print.h>
-
-
+#include <analog.h>
 
 
 const pin_t row_pins[] = MATRIX_ROWS_PINS;
 const pin_t amux_sel[] = AMUX_SEL_PINS;
-
-static adc_mux adcMux;
 
 
 // Инициализация АЦП
@@ -25,7 +20,6 @@ void adc_init(void){
     ADCSRA |= (1 << ADPS0) | (1 << ADPS1) | (1 << ADPS2); // Делитель 128 для установки частоты ацп 125Кгц
     ADCSRA |= (1 << ADEN); // Включение АЦП
     DIDR0 |= (1 << ADC0D); // Отключение цифрогово входа на входном пине F0
-
 }
 
 // Инициализация пинов (вход - выход)
@@ -68,7 +62,6 @@ void row_discharge(void){
 // Инициализация при старте (СТАНДАРТНАЯ ФУНКЦИЯ)
 void matrix_init_custom(void){
     
-    adcMux = pinToMux(ANALOG_READINGS_INPUT);
     pins_init();
     adc_init();
 }
@@ -83,22 +76,23 @@ bool matrix_scan_custom(matrix_row_t current_matrix[]){
         row_charge(row_pins[row]); // Включаем зарядку ряда
         gpio_write_pin_low(AMUX_EN_PINS); // Включаем мультиплексор
         
-        for (uint8_t col = 0; col < AMUX_CHANNELS_OCCUPIED; col++)
+        for (uint8_t col = 0; col < (sizeof(amux_sel) / sizeof(amux_sel[0])); col++)
         { 
             gpio_write_pin(F4, (col >> 0) & 1); // Извлекаем бит и устанавливаем пин high или low
             gpio_write_pin(F5, (col >> 1) & 1);
             gpio_write_pin(D4, (col >> 2) & 1);
             
-            uint16_t adc_readings = adc_read(adcMux); // Читаем и записываем в переменную
+            uint16_t adc_readings = analogReadPin(ANALOG_READINGS_INPUT); // Читаем и записываем в переменную
 
             uprintf("Row %d, Col %d: %u\r\n", row, col, adc_readings); // Выводим полученные значения в HID консоль
+            wait_us(500);
         }
 
         gpio_write_pin_high(AMUX_EN_PINS); // Отключаем мультиплексор 
 
         row_discharge();
 
-        wait_ms(20); // Снижаем частоту опроса для тестов
+        wait_ms(100); // Снижаем частоту опроса для тестов
     }
     
     return matrix_has_changed;
