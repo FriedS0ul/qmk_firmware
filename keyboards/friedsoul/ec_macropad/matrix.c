@@ -1,11 +1,11 @@
 
 
-#include <matrix.h>
+#include <quantum.h>
 #include "config.h"
+#include <matrix.h>
 #include <drivers/analog.h>
 //#include <avr/iom32u4.h>
 #include <avr/io.h>
-#include <quantum.h>
 #include <gpio.h>
 #include <print.h>
 
@@ -37,21 +37,21 @@ void pins_init(void){
     gpio_write_pin_low(DISCHARGE_PIN); // Инициализация пина для разрядки ряда
     gpio_set_pin_output(DISCHARGE_PIN); // Инициализация пина для разрядки ряда
 
-    for (uint8_t i = 0; i < (sizeof(amux_sel) / sizeof(amux_sel[0])); i++) // Выставляем управлящие пины мультиплексора как выходы + low
-    {
-        gpio_set_pin_output(amux_sel[i]);
-        gpio_write_pin_low(amux_sel[i]);
-    }
-
     for (uint8_t i = 0; i < (sizeof(row_pins) / sizeof(row_pins[0])); i++) // Выставляем управлящие пины ряды матрицы как выходы + low
     {
         gpio_set_pin_output(row_pins[i]);
         gpio_write_pin_low(row_pins[i]); 
     }
+
+    for (uint8_t i = 0; i < (sizeof(amux_sel) / sizeof(amux_sel[0])); i++) // Выставляем управлящие пины мультиплексора как выходы + low
+    {
+        gpio_set_pin_output(amux_sel[i]);
+        gpio_write_pin_low(amux_sel[i]);
+    }
 }
 
 // Функция зарядки ряда
-void row_charge(pin_t ){
+void row_charge(pin_t pin){
 
     gpio_set_pin_input(DISCHARGE_PIN); // Отключаем пин разрядки
     gpio_write_pin_high(pin); // Включаем зарядку
