@@ -27,7 +27,6 @@ void pins_init(void){
 
     gpio_set_pin_input(ANALOG_READINGS_INPUT); // Аналоговый пин становится входом
     gpio_set_pin_output(AMUX_EN_PINS); // AMUX_EN становится выходом
-    gpio_write_pin_high(AMUX_EN_PINS); // Выключение мультиплексора
     gpio_write_pin_low(DISCHARGE_PIN); // Инициализация пина для разрядки ряда
     gpio_set_pin_output(DISCHARGE_PIN); // Инициализация пина для разрядки ряда
 
@@ -73,8 +72,11 @@ bool matrix_scan_custom(matrix_row_t current_matrix[]){
 
     for (uint8_t row = 0; row < (sizeof(row_pins) / sizeof(row_pins[0])); row++)
     {
+        gpio_write_pin_low(row_pins[row]); // Попытка побороть гостинг по колонкам
+
+        gpio_write_pin_high(AMUX_EN_PINS); // Выключаем мультиплексор
+
         row_charge(row_pins[row]); // Включаем зарядку ряда
-        gpio_write_pin_low(AMUX_EN_PINS); // Включаем мультиплексор
         
         for (uint8_t col = 0; col < (sizeof(amux_sel) / sizeof(amux_sel[0])); col++)
         { 
@@ -82,13 +84,13 @@ bool matrix_scan_custom(matrix_row_t current_matrix[]){
             gpio_write_pin(F5, (col >> 1) & 1);
             gpio_write_pin(D4, (col >> 2) & 1);
             
+            gpio_write_pin_low(AMUX_EN_PINS); // Включаем мультиплексор
+
             uint16_t adc_readings = analogReadPin(ANALOG_READINGS_INPUT); // Читаем и записываем в переменную
 
             uprintf("Row %d, Col %d: %u\r\n", row, col, adc_readings); // Выводим полученные значения в HID консоль
             wait_us(500);
         }
-
-        gpio_write_pin_high(AMUX_EN_PINS); // Отключаем мультиплексор 
 
         row_discharge();
 
