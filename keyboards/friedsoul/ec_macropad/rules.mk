@@ -1,8 +1,6 @@
 
 OPT = 2
 
-CONSOLE_ENABLE = yes
-
 CUSTOM_MATRIX = lite
 
 ANALOG_DRIVER_REQUIRED = yes

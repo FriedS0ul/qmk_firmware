@@ -3,7 +3,7 @@
     "keyboard_name": "friedsoul/ec_macropad",
     "maintainer": "fries0ul",
     "bootloader": "caterina",
-    "diode_direction": "ROW2COL",
+    "diode_direction": "COL2ROW",
 
     "features": {
         "bootmagic": false,
