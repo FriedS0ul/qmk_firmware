@@ -21,8 +21,8 @@
 
 
 //NUMBES
-#define DISCHARGE_TIME_US 50
-#define CHARGE_TIME_US 100
+#define DISCHARGE_TIME_US 300
+#define CHARGE_TIME_US 200
 //#define Bottom_level
 //#define Top_level
 //#define Noise_level

@@ -98,10 +98,8 @@ bool matrix_scan_custom(matrix_row_t current_matrix[]){
 
             row_discharge(row);
 
-            wait_ms(10); // Cнижаем частоту опроса для тестов
         }
-        wait_ms(10); // Cнижаем частоту опроса для тестов
     }
-    
+    wait_ms(100); // Cнижаем частоту опроса для тестов
     return matrix_has_changed;
 }
