@@ -47,24 +47,17 @@ void pins_init(void){
 void row_charge(pin_t pin){
 
     gpio_set_pin_input(DISCHARGE_PIN); // Отключаем пин разрядки
+
     gpio_write_pin_high(pin); // Включаем зарядку
     wait_us(CHARGE_TIME_US); // Ждем зарядку
 }
 
 // Функция разрядки ряда
-void row_discharge(pin_t pin){
-
-    gpio_write_pin_low(pin); // Разряжаем этот ряд
-    gpio_set_pin_output(DISCHARGE_PIN); // Включаем разрядку
+void pin_discharge(void)
+{
     gpio_write_pin_low(DISCHARGE_PIN); // Разрядный пин в low
+    gpio_set_pin_output(DISCHARGE_PIN); // Включаем разрядку
     wait_us(DISCHARGE_TIME_US); // Ждем разрядки
-}
-
-// Инициализация при старте (СТАНДАРТНАЯ ФУНКЦИЯ)
-void matrix_init_custom(void){
-    
-    pins_init();
-    adc_init();
 }
 
 // Функция для выбора каналов мультиплексора
@@ -76,8 +69,15 @@ void mux_channel_select(uint8_t col)
     {
         gpio_write_pin(amux_sel[i], (col >> i) & 1);
     }
-
+    wait_us(10); // Ждем на всякий случай чтобы точно переключилось
     gpio_write_pin_low(AMUX_EN_PINS); // MUX вкл
+}
+
+// Инициализация при старте (СТАНДАРТНАЯ ФУНКЦИЯ)
+void matrix_init_custom(void){
+    
+    pins_init();
+    adc_init();
 }
 
 
@@ -91,13 +91,15 @@ bool matrix_scan_custom(matrix_row_t current_matrix[]){
 
         for (uint8_t row = 0; row < (sizeof(row_pins) / sizeof(row_pins[0])); row++)
         {
-            row_charge(row);
+            gpio_write_pin_low(row_pins[row]);
+            wait_us(DISCHARGE_TIME_US); // Разряжаем ряд
 
-            uint16_t raw_adc_readings = analogReadPin(ANALOG_READINGS_INPUT);
+            row_charge(row_pins[row]);
+
+            uint16_t raw_adc_readings = analogReadPin(ANALOG_READINGS_INPUT); // Читаем и записываем в переменную
             uprintf("Row %d, Col %d: %u\r\n", row, col, raw_adc_readings); // Выводим полученные значения в HID консоль
 
-            row_discharge(row);
-
+            pin_discharge(); // Разряжаем отрезок от мультиплектора до контроллера !!! НЕ РЯД !!!
         }
     }
     wait_ms(100); // Cнижаем частоту опроса для тестов
