@@ -21,8 +21,9 @@
 
 
 //NUMBES
-#define DISCHARGE_TIME_US 1000
+#define DISCHARGE_TIME_US 300
 #define CHARGE_TIME_US 100
+#define NOISE_FLOOR_SAMPLING_COUNT 20
 //#define Bottom_level
 //#define Top_level
 //#define Noise_level

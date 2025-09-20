@@ -11,18 +11,19 @@
 
 const pin_t row_pins[] = MATRIX_ROWS_PINS;
 const pin_t amux_sel[] = AMUX_SEL_PINS;
+uint16_t ec_noise_floor[MATRIX_ROWS][MATRIX_COLS];
 
 
 // Инициализация АЦП
 void adc_init(void){
-
-    ADMUX = (1 << REFS0); // Опорное напряжение == Vcc
+    analogReference(ADC_REF_POWER);
+    //ADMUX = (1 << REFS0); // Опорное напряжение == Vcc
     ADCSRA |= (1 << ADPS0) | (1 << ADPS1) | (1 << ADPS2); // Делитель 128 для установки частоты ацп 125Кгц
     ADCSRA |= (1 << ADEN); // Включение АЦП
     DIDR0 |= (1 << ADC0D); // Отключение цифрогово входа на входном пине F0
 }
 
-// Инициализация пинов (вход - выход)
+// Инициализация пинов
 void pins_init(void){
 
     gpio_set_pin_input(ANALOG_READINGS_INPUT); // Аналоговый пин становится входом
@@ -52,7 +53,7 @@ void row_charge(pin_t pin){
     wait_us(CHARGE_TIME_US); // Ждем зарядку
 }
 
-// Функция разрядки ряда
+// Функция разрядки отрезка от MUX до ADC
 void pin_discharge(void)
 {
     gpio_write_pin_low(DISCHARGE_PIN); // Разрядный пин в low
@@ -63,8 +64,6 @@ void pin_discharge(void)
 // Функция для выбора каналов мультиплексора
 void mux_channel_select(uint8_t col) 
 {
-    gpio_write_pin_high(AMUX_EN_PINS); // MUX выкл
-
     for (uint8_t i = 0; i < (sizeof(amux_sel) / sizeof(amux_sel[0])); i++) // Выбираем значение low или high на основе номера нужной колонки
     {
         gpio_write_pin(amux_sel[i], (col >> i) & 1);
@@ -73,11 +72,93 @@ void mux_channel_select(uint8_t col)
     gpio_write_pin_low(AMUX_EN_PINS); // MUX вкл
 }
 
+void matrix_scan_raw(void)
+{
+    for (uint8_t col = 0; col < MATRIX_COLS; col++)
+    {
+        uint16_t raw_adc_readings = 0;
+        mux_channel_select(col);
+
+        for (uint8_t row = 0; row < MATRIX_ROWS; row++)
+        {
+            gpio_write_pin_low(row_pins[row]);
+            wait_us(DISCHARGE_TIME_US); // Разряжаем ряд
+
+            ATOMIC_BLOCK_FORCEON                                                        
+            {
+                row_charge(row_pins[row]);
+                wait_us(10);
+                raw_adc_readings = analogReadPin(ANALOG_READINGS_INPUT); // Читаем и записываем в переменную
+            }
+
+            uprintf("Row %d, Col %d: %u\r\n", row, col, raw_adc_readings); // Выводим полученные значения в HID консоль
+
+            gpio_write_pin_high(AMUX_EN_PINS); // MUX выкл
+
+            pin_discharge(); // Разряжаем отрезок от мультиплектора до контроллера !!! НЕ РЯД !!!
+        }
+    }
+}
+
+// Сканирование RAW значений с конкретного датчика по адресу в матрице
+uint16_t sw_scan_raw(uint8_t col, uint8_t row)
+{
+    uint16_t raw_adc_readings = 0;
+    mux_channel_select(col);
+
+    gpio_write_pin_low(row_pins[row]);
+    wait_us(DISCHARGE_TIME_US); // Разряжаем ряд
+
+    ATOMIC_BLOCK_FORCEON                                                        
+    {
+        row_charge(row_pins[row]);
+        wait_us(10);
+        raw_adc_readings = analogReadPin(ANALOG_READINGS_INPUT); // Читаем и записываем в переменную
+    }
+
+    gpio_write_pin_high(AMUX_EN_PINS); // MUX выкл
+
+    pin_discharge();
+
+    return raw_adc_readings;
+}
+
+void matrix_noise_sample(void)
+{
+    for (uint8_t col = 0; col < MATRIX_COLS; col++) // Заполняем таблицу нулями
+    {
+        for (uint8_t row = 0; row < MATRIX_ROWS; row++)
+        {
+            ec_noise_floor[col][row] = 0;
+        } 
+    }
+    
+    for (uint8_t sample = 0; sample < NOISE_FLOOR_SAMPLING_COUNT; sample++) // Производим семплинг и записываем значения
+    {
+        for (uint8_t col = 0; col < MATRIX_COLS; col++)
+        {
+            for (uint8_t row = 0; row < MATRIX_ROWS; row++)
+            {
+                ec_noise_floor[col][row] += sw_scan_raw(col, row);
+            } 
+        }
+    }
+
+    for (uint8_t col = 0; col < MATRIX_COLS; col++) // Усредняем значения
+    {
+        for (uint8_t row = 0; row < MATRIX_ROWS; row++)
+        {
+            ec_noise_floor[col][row] /= NOISE_FLOOR_SAMPLING_COUNT;
+        } 
+    }
+}
+
 // Инициализация при старте (СТАНДАРТНАЯ ФУНКЦИЯ)
 void matrix_init_custom(void){
     
     pins_init();
     adc_init();
+    matrix_noise_sample();
 }
 
 
@@ -85,23 +166,8 @@ void matrix_init_custom(void){
 bool matrix_scan_custom(matrix_row_t current_matrix[]){
     bool matrix_has_changed = true;
 
-    for (uint8_t col = 0; col < (sizeof(amux_sel) / sizeof(amux_sel[0])); col++)
-    {
-        mux_channel_select(col);
+    matrix_scan_raw();
 
-        for (uint8_t row = 0; row < (sizeof(row_pins) / sizeof(row_pins[0])); row++)
-        {
-            gpio_write_pin_low(row_pins[row]);
-            wait_us(DISCHARGE_TIME_US); // Разряжаем ряд
-
-            row_charge(row_pins[row]);
-
-            uint16_t raw_adc_readings = analogReadPin(ANALOG_READINGS_INPUT); // Читаем и записываем в переменную
-            uprintf("Row %d, Col %d: %u\r\n", row, col, raw_adc_readings); // Выводим полученные значения в HID консоль
-
-            pin_discharge(); // Разряжаем отрезок от мультиплектора до контроллера !!! НЕ РЯД !!!
-        }
-    }
     wait_ms(100); // Cнижаем частоту опроса для тестов
     return matrix_has_changed;
 }
