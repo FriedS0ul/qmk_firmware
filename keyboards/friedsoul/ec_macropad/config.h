@@ -11,8 +11,6 @@
 // AMUX
 #define AMUX_SEL_PINS {F4, F5, F6}
 #define AMUX_EN_PINS B6
-#define AMUX_CHANNELS_MAX 8
-#define AMUX_CHANNELS_OCCUPIED 3
 
 
 // ANALOG PINS
@@ -24,9 +22,6 @@
 #define DISCHARGE_TIME_US 300
 #define CHARGE_TIME_US 100
 #define NOISE_FLOOR_SAMPLING_COUNT 20
-//#define Bottom_level
-//#define Top_level
-//#define Noise_level
 
-//#define Actuation_level
-//#define Release_level
+#define ACTUATION_LEVEL 500
+#define RELEASE_LEVEL 450
