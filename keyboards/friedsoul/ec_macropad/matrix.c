@@ -17,8 +17,8 @@ uint16_t ec_noise_floor[MATRIX_ROWS][MATRIX_COLS];
 void adc_init(void){
     analogReference(ADC_REF_POWER);
     //ADMUX = (1 << REFS0); // Опорное напряжение == Vcc
-    //ADCSRA |= (1 << ADPS0) | (1 << ADPS1) | (1 << ADPS2); // Делитель 128 для установки частоты ацп 125Кгц
-    //ADCSRA |= (1 << ADEN); // Включение АЦП
+    ADCSRA |= (1 << ADPS0) | (1 << ADPS1) | (1 << ADPS2); // Делитель 128 для установки частоты ацп 125Кгц
+    ADCSRA |= (1 << ADEN); // Включение АЦП
     DIDR0 |= (1 << ADC0D); // Отключение цифрогово входа на входном пине F0
 }
 
@@ -44,10 +44,9 @@ void pins_init(void){
 }
 
 // Функция зарядки ряда
-void row_charge(pin_t pin){
-
+void row_charge(pin_t pin)
+{
     gpio_set_pin_input(DISCHARGE_PIN); // Отключаем пин разрядки
-
     gpio_write_pin_high(pin); // Включаем зарядку
     wait_us(CHARGE_TIME_US); // Ждем зарядку
 }
@@ -63,6 +62,7 @@ void pin_discharge(void)
 // Функция для выбора каналов мультиплексора
 void mux_channel_select(uint8_t col) 
 {
+    gpio_write_pin_high(AMUX_EN_PINS); // MUX выкл
     for (uint8_t i = 0; i < (sizeof(amux_sel) / sizeof(amux_sel[0])); i++) // Выбираем значение low или high на основе номера нужной колонки
     {
         gpio_write_pin(amux_sel[i], (col >> i) & 1);
@@ -80,16 +80,17 @@ uint16_t ec_sw_scan_raw(uint8_t col, uint8_t row)
     gpio_write_pin_low(row_pins[row]);
     wait_us(DISCHARGE_TIME_US); // Разряжаем ряд
 
-    ATOMIC_BLOCK_FORCEON                                                        
-    {
-        row_charge(row_pins[row]);
-        wait_us(10);
-        raw_adc_readings = analogReadPin(ANALOG_READINGS_INPUT); // Читаем и записываем в переменную
-    }
+    
+    row_charge(row_pins[row]);
+    wait_us(10);
+    raw_adc_readings = analogReadPin(ANALOG_READINGS_INPUT); // Читаем и записываем в переменную
+    
 
     gpio_write_pin_high(AMUX_EN_PINS); // MUX выкл
 
     pin_discharge();
+
+    uprintf("Row %d, Col %d: %u\r\n", row, col, raw_adc_readings); // Выводим полученные значения в HID консоль
 
     return raw_adc_readings;
 }
@@ -130,6 +131,8 @@ bool ec_matrix_scan(matrix_row_t current_matrix[])
     bool matrix_has_changed = false;
     for (uint8_t col = 0; col < MATRIX_COLS; col++)
     {
+        //mux_channel_select(col);
+
         for (uint8_t row = 0; row < MATRIX_ROWS; row++)
         {
             uint16_t raw_adc_readings = ec_sw_scan_raw(col, row);
@@ -147,6 +150,8 @@ bool ec_matrix_scan(matrix_row_t current_matrix[])
             }
         }
     }
+
+    wait_ms(100); // Cнижаем частоту опроса для тестов
     return matrix_has_changed;
 }
 
@@ -163,6 +168,5 @@ void matrix_init_custom(void){
 bool matrix_scan_custom(matrix_row_t current_matrix[]){
     bool matrix_has_changed = ec_matrix_scan(current_matrix);
 
-    wait_ms(100); // Cнижаем частоту опроса для тестов
     return matrix_has_changed;
 }

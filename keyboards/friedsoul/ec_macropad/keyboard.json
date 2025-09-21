@@ -1,14 +1,14 @@
 {
-    "manufacturer": "fries0ul",
-    "keyboard_name": "friedsoul/ec_macropad",
-    "maintainer": "fries0ul",
+    "manufacturer": "FriedS0ul",
+    "keyboard_name": "EC-Macropad",
+    "maintainer": "FriedS0ul",
     "bootloader": "caterina",
     "diode_direction": "COL2ROW",
 
     "features": {
         "bootmagic": false,
         "extrakey": true,
-        "mousekey": true,
+        "mousekey": false,
         "nkro": true,
         "console": true,
         "command": false

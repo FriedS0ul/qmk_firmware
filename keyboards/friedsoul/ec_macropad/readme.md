@@ -4,7 +4,7 @@
 
 *A short description of the keyboard/project*
 
-* Keyboard Maintainer: [fries0ul](https://github.com/fries0ul)
+* Keyboard Maintainer: [FriedS0ul](https://github.com/FriedS0ul)
 * Hardware Supported: *The PCBs, controllers supported*
 * Hardware Availability: *Links to where you can find this hardware*
 
