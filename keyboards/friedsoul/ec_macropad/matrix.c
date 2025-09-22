@@ -67,31 +67,30 @@ void mux_channel_select(uint8_t col)
     {
         gpio_write_pin(amux_sel[i], (col >> i) & 1);
     }
-    wait_us(10);
-    gpio_write_pin_low(AMUX_EN_PINS);
 }
 
 // Сканирование RAW значений с конкретного датчика по адресу в матрице
 uint16_t ec_sw_scan_raw(uint8_t col, uint8_t row)
 {
-    gpio_write_pin_low(row_pins[row]);
-    wait_us(DISCHARGE_TIME_US);
-
 
     gpio_set_pin_input(DISCHARGE_PIN);
-    gpio_write_pin_high(row_pins[row]);
-    wait_us(CHARGE_TIME_US);
+
+
+
+    gpio_write_pin_low(AMUX_EN_PINS);
+    wait_us(30); // MUX вкл
 
 
     uint16_t raw_adc_readings = analogReadPin(ANALOG_READINGS_INPUT);
 
 
     gpio_write_pin_high(AMUX_EN_PINS); // MUX выкл
+    gpio_write_pin_low(DISCHARGE_PIN);
     gpio_set_pin_output(DISCHARGE_PIN);
 
     uprintf("ROW %d, COL %d: %u\r\n", row, col, raw_adc_readings); // Выводим полученные значения в HID консоль
 
-    wait_us(DISCHARGE_TIME_US);
+    wait_ms(5);
 
     return raw_adc_readings;
 }
