@@ -10,7 +10,7 @@
 
 const pin_t row_pins[] = MATRIX_ROWS_PINS;
 const pin_t amux_sel[] = AMUX_SEL_PINS;
-uint16_t ec_noise_floor[MATRIX_ROWS][MATRIX_COLS];
+uint16_t ec_noise_threshold[MATRIX_ROWS][MATRIX_COLS];
 
 
 // Инициализация АЦП
@@ -48,7 +48,7 @@ void row_charge(pin_t pin)
 {
     gpio_set_pin_input(DISCHARGE_PIN);
     gpio_write_pin_high(pin);
-    wait_us(CHARGE_TIME_US); 
+    wait_us(CHARGE_TIME_US);
 }
 
 // Функция разрядки аналогового пина
@@ -62,13 +62,47 @@ void pin_discharge(void)
 // Функция для выбора каналов мультиплексора
 void mux_channel_select(uint8_t col) 
 {
-    gpio_write_pin_high(AMUX_EN_PINS); // MUX выкл
     for (uint8_t i = 0; i < (sizeof(amux_sel) / sizeof(amux_sel[0])); i++) // Выбираем значение low или high на основе номера нужной колонки
     {
         gpio_write_pin(amux_sel[i], (col >> i) & 1);
     }
-    wait_us(10);
+}
+
+// Сканирование RAW значений с конкретного датчика по адресу в матрице
+uint16_t ec_sw_scan_raw(uint8_t col, uint8_t row)
+{
+    gpio_write_pin_high(AMUX_EN_PINS);
+    mux_channel_select(col); // MUX не включается, только ставится канал
+
+    gpio_set_pin_output(row_pins[row]);
+    gpio_write_pin_low(row_pins[row]);
+
+    wait_us(DISCHARGE_TIME_US);
+
+    gpio_set_pin_input(DISCHARGE_PIN);
+
+
+    gpio_write_pin_high(row_pins[row]);
+    
+    wait_us(CHARGE_TIME_US);
+
     gpio_write_pin_low(AMUX_EN_PINS); // MUX вкл
+
+    wait_us(10);
+
+    uint16_t raw_adc_readings = analogReadPin(ANALOG_READINGS_INPUT);
+
+    gpio_set_pin_input(row_pins[row]);
+
+    gpio_write_pin_high(AMUX_EN_PINS); // MUX выкл
+
+    gpio_write_pin_low(DISCHARGE_PIN);
+    gpio_set_pin_output(DISCHARGE_PIN);
+
+    wait_us(DISCHARGE_TIME_US);
+
+    uprintf("COL %d, ROW %d: %u\r\n", col, row, raw_adc_readings); // Выводим полученные значения в HID консоль
+    return raw_adc_readings;
 }
 
 // Семплинг шума матрицы при инициализации
@@ -78,19 +112,18 @@ void ec_matrix_noise_sample(void)
     {
         for (uint8_t row = 0; row < MATRIX_ROWS; row++)
         {
-            ec_noise_floor[col][row] = 0;
+            ec_noise_threshold[col][row] = 0;
         } 
     }
     
-    for (uint8_t sample = 0; sample < NOISE_FLOOR_SAMPLING_COUNT; sample++) // Производим семплинг и записываем значения
+    for (uint8_t sample = 0; sample < NOISE_THRESHOLD_SAMPLING_COUNT; sample++) // Производим семплинг и записываем значения
     {
         for (uint8_t col = 0; col < MATRIX_COLS; col++)
         {
-            mux_channel_select(col);
             for (uint8_t row = 0; row < MATRIX_ROWS; row++)
             {
-                ec_noise_floor[col][row] += ec_sw_scan_raw(col, row);
-            } 
+                ec_noise_threshold[col][row] += ec_sw_scan_raw(col, row);
+            }
         }
     }
 
@@ -98,43 +131,10 @@ void ec_matrix_noise_sample(void)
     {
         for (uint8_t row = 0; row < MATRIX_ROWS; row++)
         {
-            ec_noise_floor[col][row] /= NOISE_FLOOR_SAMPLING_COUNT;
-            ec_noise_floor[col][row] += NOISE_OFFSET;
+            ec_noise_threshold[col][row] /= NOISE_THRESHOLD_SAMPLING_COUNT;
+            ec_noise_threshold[col][row] += NOISE_OFFSET;
         } 
     }
-}
-
-// Сканирование RAW значений с конкретного датчика по адресу в матрице
-uint16_t ec_sw_scan_raw(uint8_t col, uint8_t row)
-{
-    uint16_t raw_adc_readings = 0;
-    //mux_channel_select(col);
-
-    gpio_write_pin_low(row_pins[row]);
-    
-    wait_us(DISCHARGE_TIME_US); // Разряжаем ряд
-
-    ATOMIC_BLOCK_FORCEON
-    {
-        row_charge(row_pins[row]);
-        wait_us(10);
-        raw_adc_readings = analogReadPin(ANALOG_READINGS_INPUT); // Читаем и записываем в переменную
-    }
-
-    gpio_write_pin_high(AMUX_EN_PINS); // MUX выкл
-
-    pin_discharge();
-
-    uprintf("Row %d, Col %d: %u\r\n", row, col, raw_adc_readings); // Выводим полученные значения в HID консоль
-
-    return raw_adc_readings;
-}
-
-// Функция сканирования ряда при выбранной колонке
-uint16_t row_scan_raw(uint8_t pin)
-{
-
-
 }
 
 //Сканирование матрицы и обновление current_matrix
@@ -143,13 +143,16 @@ bool ec_matrix_scan(matrix_row_t current_matrix[])
     bool matrix_has_changed = false;
     for (uint8_t col = 0; col < MATRIX_COLS; col++)
     {
-        mux_channel_select(col);
         for (uint8_t row = 0; row < MATRIX_ROWS; row++)
         {
             uint16_t raw_adc_readings = ec_sw_scan_raw(col, row);
             uint8_t previous_state = (current_matrix[row] >> col) & 1;
 
-            if (raw_adc_readings < RELEASE_LEVEL && previous_state == 1) // Сравниваем текущее состояние с предыдущим и решаем в каком состоянии клавиша сейчас
+            if (raw_adc_readings < ec_noise_threshold[col][row]) // Сравниваем
+            {
+                // Ничего не делаем
+            }
+            else if (raw_adc_readings < RELEASE_LEVEL && previous_state == 1) 
             {
                 current_matrix[row] &= ~(1 << col); // Отпускаем
                 matrix_has_changed = true;
@@ -161,8 +164,7 @@ bool ec_matrix_scan(matrix_row_t current_matrix[])
             }
         }
     }
-
-    wait_ms(100); // Cнижаем частоту опроса для тестов
+    wait_ms(200); // Cнижаем частоту опроса для тестов
     return matrix_has_changed;
 }
 
