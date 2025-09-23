@@ -10,7 +10,7 @@
 
 const pin_t row_pins[] = MATRIX_ROWS_PINS;
 const pin_t amux_sel[] = AMUX_SEL_PINS;
-uint16_t ec_noise_threshold[MATRIX_ROWS][MATRIX_COLS];
+uint16_t ec_noise_threshold[MATRIX_COLS][MATRIX_ROWS];
 
 
 // Инициализация АЦП
@@ -27,16 +27,16 @@ void pins_init(void){
 
     gpio_set_pin_input(ANALOG_READINGS_INPUT); // Аналоговый пин становится входом
     gpio_set_pin_output(AMUX_EN_PINS); // AMUX_EN становится выходом
+    gpio_set_pin_input(DISCHARGE_PIN); // Инициализация пина для разрядки ряда
     gpio_write_pin_low(DISCHARGE_PIN); // Инициализация пина для разрядки ряда
-    gpio_set_pin_output(DISCHARGE_PIN); // Инициализация пина для разрядки ряда
 
-    for (uint8_t i = 0; i < (sizeof(row_pins) / sizeof(row_pins[0])); i++) // Выставляем управлящие пины ряды матрицы как выходы + low
+    for (uint8_t i = 0; i < (sizeof(row_pins) / sizeof(row_pins[0])); i++) // Выставляем управлящие пины ряды матрицы как input low
     {
-        gpio_set_pin_output(row_pins[i]);
+        gpio_set_pin_input(row_pins[i]);
         gpio_write_pin_high(row_pins[i]); 
     }
 
-    for (uint8_t i = 0; i < (sizeof(amux_sel) / sizeof(amux_sel[0])); i++) // Выставляем управлящие пины мультиплексора как выходы + low
+    for (uint8_t i = 0; i < (sizeof(amux_sel) / sizeof(amux_sel[0])); i++) // Выставляем управлящие пины мультиплексора как ouput low
     {
         gpio_set_pin_output(amux_sel[i]);
         gpio_write_pin_low(amux_sel[i]);
@@ -72,25 +72,30 @@ void mux_channel_select(uint8_t col)
 // Сканирование RAW значений с конкретного датчика по адресу в матрице
 uint16_t ec_sw_scan_raw(uint8_t col, uint8_t row)
 {
+    uint16_t raw_adc_readings = 0;
 
-    gpio_set_pin_input(DISCHARGE_PIN);
+    gpio_set_pin_input(DISCHARGE_PIN); // Discharge выкл
+   
+    gpio_set_pin_output(row_pins[row]); // Зарядка
+    wait_us(CHARGE_TIME_US);
 
-
+    cli();
 
     gpio_write_pin_low(AMUX_EN_PINS);
-    wait_us(30); // MUX вкл
+    wait_us(2); // MUX вкл
 
+    analogReadPin(ANALOG_READINGS_INPUT); // DUMMY CONVERSION
 
-    uint16_t raw_adc_readings = analogReadPin(ANALOG_READINGS_INPUT);
+    raw_adc_readings = analogReadPin(ANALOG_READINGS_INPUT); // Чтение 
 
+    sei();
 
-    gpio_write_pin_high(AMUX_EN_PINS); // MUX выкл
-    gpio_write_pin_low(DISCHARGE_PIN);
+    gpio_set_pin_input(row_pins[row]); // Discharge вкл
     gpio_set_pin_output(DISCHARGE_PIN);
+    wait_us(DISCHARGE_TIME_US);
+
 
     uprintf("ROW %d, COL %d: %u\r\n", row, col, raw_adc_readings); // Выводим полученные значения в HID консоль
-
-    wait_ms(5);
 
     return raw_adc_readings;
 }
