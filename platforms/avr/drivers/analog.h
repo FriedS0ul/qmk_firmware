@@ -37,7 +37,9 @@ int16_t adc_read(uint8_t mux);
 #define ADC_REF_INTERNAL (_BV(REFS1) | _BV(REFS0)) // Internal 2.56V Voltage Reference with external capacitor on AREF pin (1.1V for 328P)
 
 // These prescaler values are for high speed mode, ADHSM = 1
-#if F_CPU == 16000000L || F_CPU == 12000000L
+#if F_CPU == 16000000L
+#    define ADC_PRESCALER (_BV(ADPS2) | _BV(ADPS1) | _BV(ADPS0)) // /128
+#elif F_CPU == 12000000L
 #    define ADC_PRESCALER (_BV(ADPS2) | _BV(ADPS1)) // /64
 #elif F_CPU == 8000000L
 #    define ADC_PRESCALER (_BV(ADPS2) | _BV(ADPS0)) // /32

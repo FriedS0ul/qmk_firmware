@@ -15,9 +15,10 @@ uint16_t ec_noise_threshold[MATRIX_COLS][MATRIX_ROWS];
 
 // Инициализация АЦП
 void adc_init(void){
-    analogReference(ADC_REF_POWER);
-    //ADMUX = (1 << REFS0); // Опорное напряжение == Vcc
+    //analogReference(ADC_REF_POWER);
+    ADMUX = (1 << REFS0); // Опорное напряжение == Vcc
     ADCSRA |= (1 << ADPS0) | (1 << ADPS1) | (1 << ADPS2); // Делитель 128 для установки частоты ацп 125Кгц
+    ADCSRA &= ~(1 << ADATE); // Auto trigger выкл
     ADCSRA |= (1 << ADEN); // Включение АЦП
     DIDR0 |= (1 << ADC0D); // Отключение цифрогово входа на входном пине F0
 }
@@ -28,12 +29,10 @@ void pins_init(void){
     gpio_set_pin_input(ANALOG_READINGS_INPUT); // Аналоговый пин становится входом
     gpio_set_pin_output(AMUX_EN_PINS); // AMUX_EN становится выходом
     gpio_set_pin_input(DISCHARGE_PIN); // Инициализация пина для разрядки ряда
-    gpio_write_pin_low(DISCHARGE_PIN); // Инициализация пина для разрядки ряда
 
-    for (uint8_t i = 0; i < (sizeof(row_pins) / sizeof(row_pins[0])); i++) // Выставляем управлящие пины ряды матрицы как input low
+    for (uint8_t i = 0; i < (sizeof(row_pins) / sizeof(row_pins[0])); i++) // Выставляем ряды матрицы как input
     {
         gpio_set_pin_input(row_pins[i]);
-        gpio_write_pin_high(row_pins[i]); 
     }
 
     for (uint8_t i = 0; i < (sizeof(amux_sel) / sizeof(amux_sel[0])); i++) // Выставляем управлящие пины мультиплексора как ouput low
@@ -67,35 +66,47 @@ void mux_channel_select(uint8_t col)
     {
         gpio_write_pin(amux_sel[i], (col >> i) & 1);
     }
+    gpio_write_pin_low(AMUX_EN_PINS);
+    wait_us(30);
 }
 
 // Сканирование RAW значений с конкретного датчика по адресу в матрице
 uint16_t ec_sw_scan_raw(uint8_t col, uint8_t row)
 {
     uint16_t raw_adc_readings = 0;
+    mux_channel_select(col);
+    gpio_set_pin_input(DISCHARGE_PIN);
 
-    gpio_set_pin_input(DISCHARGE_PIN); // Discharge выкл
-   
-    gpio_set_pin_output(row_pins[row]); // Зарядка
-    wait_us(CHARGE_TIME_US);
+    wait_us(500);
 
     cli();
 
-    gpio_write_pin_low(AMUX_EN_PINS);
-    wait_us(2); // MUX вкл
+    gpio_write_pin_high(row_pins[row]);
+    gpio_set_pin_output(row_pins[row]);
 
-    analogReadPin(ANALOG_READINGS_INPUT); // DUMMY CONVERSION
+    ADCSRA |= (1 << ADSC);
+    while (ADCSRA & (1 << ADSC)) // dummy conversion
+    {
 
-    raw_adc_readings = analogReadPin(ANALOG_READINGS_INPUT); // Чтение 
+    }
+
+    ADCSRA |= (1 << ADSC);
+    while (ADCSRA & (1 << ADSC)) // Чтение
+    {
+
+    }
+    raw_adc_readings = ADC;
 
     sei();
 
-    gpio_set_pin_input(row_pins[row]); // Discharge вкл
+    gpio_write_pin_low(DISCHARGE_PIN);
     gpio_set_pin_output(DISCHARGE_PIN);
+    gpio_set_pin_input(row_pins[row]);
     wait_us(DISCHARGE_TIME_US);
-
+    
 
     uprintf("ROW %d, COL %d: %u\r\n", row, col, raw_adc_readings); // Выводим полученные значения в HID консоль
+    wait_ms(100);
 
     return raw_adc_readings;
 }
@@ -140,7 +151,6 @@ bool ec_matrix_scan(matrix_row_t current_matrix[])
     bool matrix_has_changed = false;
     for (uint8_t col = 0; col < MATRIX_COLS; col++)
     {
-        mux_channel_select(col);
         for (uint8_t row = 0; row < MATRIX_ROWS; row++)
         {
             uint16_t raw_adc_readings = ec_sw_scan_raw(col, row);
@@ -158,7 +168,7 @@ bool ec_matrix_scan(matrix_row_t current_matrix[])
             }
         }
     }
-    wait_ms(200); // Cнижаем частоту опроса для тестов
+    //wait_ms(200); // Cнижаем частоту опроса для тестов
     return matrix_has_changed;
 }
 
@@ -167,13 +177,13 @@ void matrix_init_custom(void){
     
     pins_init();
     adc_init();
-    ec_matrix_noise_sample();
+    //ec_matrix_noise_sample();
 }
 
 
 // Скан матрицы (СТАНДАРТНАЯ ФУНКЦИЯ)
 bool matrix_scan_custom(matrix_row_t current_matrix[]){
     bool matrix_has_changed = ec_matrix_scan(current_matrix);
-
+    
     return matrix_has_changed;
 }
