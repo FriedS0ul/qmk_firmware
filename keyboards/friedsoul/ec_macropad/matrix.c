@@ -11,6 +11,8 @@
 const pin_t row_pins[] = MATRIX_ROWS_PINS;
 const pin_t amux_sel[] = AMUX_SEL_PINS;
 uint16_t ec_noise_threshold[MATRIX_COLS][MATRIX_ROWS];
+uint16_t log_matrix[MATRIX_COLS][MATRIX_ROWS];
+uint8_t scan_counter = 0
 
 
 // Инициализация АЦП
@@ -26,19 +28,41 @@ void adc_init(void){
 // Инициализация пинов
 void pins_init(void){
 
-    gpio_set_pin_input(ANALOG_READINGS_INPUT); // Аналоговый пин становится входом
-    gpio_set_pin_output(AMUX_EN_PINS); // AMUX_EN становится выходом
-    gpio_set_pin_input(DISCHARGE_PIN); // Инициализация пина для разрядки ряда
+    gpio_set_pin_input(ANALOG_READINGS_INPUT); 
+    gpio_set_pin_output(AMUX_EN_PINS); 
+    gpio_set_pin_input(DISCHARGE_PIN); 
 
-    for (uint8_t i = 0; i < (sizeof(row_pins) / sizeof(row_pins[0])); i++) // Выставляем ряды матрицы как input
+    for (uint8_t i = 0; i < (sizeof(row_pins) / sizeof(row_pins[0])); i++) // Выставляем ряды матрицы как output low
     {
-        gpio_set_pin_input(row_pins[i]);
+        gpio_set_pin_output(row_pins[i]);
+        gpio_write_pin_low(row_pins[i]);
     }
 
     for (uint8_t i = 0; i < (sizeof(amux_sel) / sizeof(amux_sel[0])); i++) // Выставляем управлящие пины мультиплексора как ouput low
     {
         gpio_set_pin_output(amux_sel[i]);
         gpio_write_pin_low(amux_sel[i]);
+    }
+}
+
+// Функция вывода лога с данными сканирования датчиков каждые 10 циклов сканирования
+void log_print(void)
+{
+    if (scan_counter == 10)
+    {
+       for (uint8_t col = 0; col < MATRIX_COLS; col++)
+        {
+            for (uint8_t row = 0; row < MATRIX_ROWS; row++)
+            {
+            uprintf("COl %d ROW %d: %u", col, row, log_matrix[col][row]);
+            uprintf("\n");
+            } 
+        }  
+        scan_counter = 0;    
+    }
+    else
+    {
+        scan_counter++;
     }
 }
 
@@ -75,14 +99,13 @@ uint16_t ec_sw_scan_raw(uint8_t col, uint8_t row)
 {
     uint16_t raw_adc_readings = 0;
     mux_channel_select(col);
+    
     gpio_set_pin_input(DISCHARGE_PIN);
-
-    wait_us(500);
+    gpio_set_pin_output(row_pins[row]);
+    gpio_write_pin_high(row_pins[row]);
+    wait_us(CHARGE_TIME_US);
 
     cli();
-
-    gpio_write_pin_high(row_pins[row]);
-    gpio_set_pin_output(row_pins[row]);
 
     ADCSRA |= (1 << ADSC);
     while (ADCSRA & (1 << ADSC)) // dummy conversion
@@ -97,16 +120,13 @@ uint16_t ec_sw_scan_raw(uint8_t col, uint8_t row)
     }
     raw_adc_readings = ADC;
 
+    gpio_write_pin_low(row_pins[row]);
+
     sei();
 
-    gpio_write_pin_low(DISCHARGE_PIN);
     gpio_set_pin_output(DISCHARGE_PIN);
-    gpio_set_pin_input(row_pins[row]);
-    wait_us(DISCHARGE_TIME_US);
-    
-
-    uprintf("ROW %d, COL %d: %u\r\n", row, col, raw_adc_readings); // Выводим полученные значения в HID консоль
-    wait_ms(100);
+    gpio_write_pin_low(DISCHARGE_PIN);
+    wait_us(CHARGE_TIME_US);
 
     return raw_adc_readings;
 }
@@ -154,7 +174,8 @@ bool ec_matrix_scan(matrix_row_t current_matrix[])
         for (uint8_t row = 0; row < MATRIX_ROWS; row++)
         {
             uint16_t raw_adc_readings = ec_sw_scan_raw(col, row);
-            uint8_t previous_state = (current_matrix[row] >> col) & 1;
+            uint8_t previous_state = (current_matrix[row] >> col) & 1; // Запрос текущего стостояния (нажата или отпущена)
+            log_matrix[col][row] = raw_adc_readings; // Логирование нажатий в массив
 
             if (raw_adc_readings < RELEASE_LEVEL && previous_state == 1) 
             {
@@ -168,7 +189,6 @@ bool ec_matrix_scan(matrix_row_t current_matrix[])
             }
         }
     }
-    //wait_ms(200); // Cнижаем частоту опроса для тестов
     return matrix_has_changed;
 }
 
@@ -184,6 +204,8 @@ void matrix_init_custom(void){
 // Скан матрицы (СТАНДАРТНАЯ ФУНКЦИЯ)
 bool matrix_scan_custom(matrix_row_t current_matrix[]){
     bool matrix_has_changed = ec_matrix_scan(current_matrix);
+
+    log_print();
     
     return matrix_has_changed;
 }

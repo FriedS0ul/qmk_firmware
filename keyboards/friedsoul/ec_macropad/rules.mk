@@ -3,6 +3,8 @@ OPT = 2
 
 CUSTOM_MATRIX = lite
 
+F_MCU = 16000000
+
 ANALOG_DRIVER_REQUIRED = yes
 
 SRC += matrix.c
