@@ -1,6 +1,6 @@
 {
     "manufacturer": "FriedS0ul",
-    "keyboard_name": "Regina",
+    "keyboard_name": "Regina macropad",
     "maintainer": "FriedS0ul",
     "bootloader": "stm32-dfu",
     "diode_direction": "COL2ROW",
@@ -11,10 +11,7 @@
         "nkro": false,
         "console": true
     },
-    "matrix_pins": {
-        "cols": ["C2"],
-        "rows": ["D1", "D1", "D1", "D1", "D1"]
-    },
+    
     "processor": "STM32G431",
     "url": "",
     "usb": {

@@ -18,8 +18,9 @@ uint8_t scan_counter = 0;
 // Инициализация АЦП
 void adc_init(void){
     //analogReference(ADC_REF_POWER);
-    ADMUX = (1 << REFS0); // Опорное напряжение == Vcc
-    ADCSRA |= (1 << ADPS0) | (1 << ADPS1) | (1 << ADPS2); // Делитель 128 для установки частоты ацп 125Кгц
+    ADMUX |= (1 << REFS0) | (1 << REFS1) ; // Опорное напряжение == Vcc
+    //ADCSRA |= (1 << ADPS0) | (1 << ADPS1) | (1 << ADPS2); // Делитель 128 для установки частоты ацп 125Кгц
+    ADCSRA |= (1 << ADPS1) | (1 << ADPS2); // Делитель 64
     ADCSRA &= ~(1 << ADATE); // Auto trigger выкл
     ADCSRA |= (1 << ADEN); // Включение АЦП
     DIDR0 |= (1 << ADC0D); // Отключение цифрогово входа на входном пине F0
@@ -48,7 +49,7 @@ void pins_init(void){
 // Функция вывода лога с данными сканирования датчиков каждые 10 циклов сканирования
 void log_print(void)
 {
-    if (scan_counter == 50)
+    if (scan_counter == 70)
     {
        for (uint8_t col = 0; col < MATRIX_COLS; col++)
         {
@@ -75,7 +76,7 @@ void row_charge(uint8_t pin)
 }
 
 // Функция разрядки аналогового пина
-void pin_discharge(void)
+void com_discharge(void)
 {
     gpio_set_pin_output(DISCHARGE_PIN);
     gpio_write_pin_low(DISCHARGE_PIN);
@@ -116,22 +117,17 @@ uint16_t ec_sw_scan_raw(uint8_t row)
     cli();
 
     ADCSRA |= (1 << ADSC);
-    while (ADCSRA & (1 << ADSC)) // dummy conversion
-    {
-
-    }
+    while (ADCSRA & (1 << ADSC)){} // dummy conversion
 
     ADCSRA |= (1 << ADSC);
-    while (ADCSRA & (1 << ADSC)) // Чтение
-    {
+    while (ADCSRA & (1 << ADSC)){} // Чтение
 
-    }
     raw_adc_readings = ADC;
 
     sei();
 
     rows_low();
-    pin_discharge();
+    com_discharge();
 
     return raw_adc_readings;
 }
