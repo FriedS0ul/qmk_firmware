@@ -8,8 +8,7 @@
         "bootmagic": false,
         "extrakey": false,
         "mousekey": false,
-        "nkro": false,
-        "console": true
+        "nkro": false
     },
     
     "processor": "STM32G431",
