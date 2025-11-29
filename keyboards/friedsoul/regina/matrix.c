@@ -11,7 +11,6 @@ static uint16_t log_matrix[MATRIX_COLS][MATRIX_ROWS];
 static uint16_t ec_noise_threshold[MATRIX_COLS][MATRIX_ROWS];
 static uint16_t ec_bottom_threshold[MATRIX_COLS][MATRIX_ROWS];
 static uint16_t scan_counter = 0;
-//static bool calibration_active = false;
 
 
 void adc_int(void){
