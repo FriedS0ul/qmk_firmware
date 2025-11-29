@@ -8,14 +8,15 @@
 
 const pin_t row_pins [] = MATRIX_ROW_PINS;
 static uint16_t log_matrix[MATRIX_COLS][MATRIX_ROWS];
-static uint16_t ec_noise_treshold[MATRIX_COLS][MATRIX_ROWS];
-uint16_t scan_counter = 0;
+static uint16_t ec_noise_threshold[MATRIX_COLS][MATRIX_ROWS];
+static uint16_t ec_bottom_threshold[MATRIX_COLS][MATRIX_ROWS];
+static uint16_t scan_counter = 0;
+//static bool calibration_active = false;
 
 
 void adc_int(void){
 
     palSetLineMode(ANALOG_READINGS_INPUT, PAL_MODE_INPUT_ANALOG);
-
 }
 
 void pins_init(void){
@@ -29,11 +30,12 @@ void pins_init(void){
         gpio_set_pin_output(row_pins[i]);
         
     }
-    
 }
- // Вывод сканирования в консоль каждые 500 циклов
+
+ // Вывод сканирования в консоль каждые 1000 циклов
  void logger(void){
-    if (scan_counter == 500)
+
+    if (scan_counter == 1000)
     {
         uprintf("\r\n");
         for (uint8_t col = 0; col < MATRIX_COLS; col++)
@@ -52,7 +54,26 @@ void pins_init(void){
     }
  }
 
+ // Линейная интерполяция: Y = Y1 + (Y2 - Y1) * ((X - X1) / (X2 - X1))
+ 
+ // Зарядка ряда для сканирования 
+ void ec_sw_charge(uint8_t row){
 
+    gpio_write_pin_high(row_pins[row]);
+
+    gpio_set_pin_input(DISCHARGE_PIN);
+ }
+
+ // Разрядка COM линии после сканирования
+ void ec_sw_discharge(uint8_t row){
+
+    gpio_write_pin_low(row_pins[row]);
+
+    gpio_write_pin_low(DISCHARGE_PIN);
+    gpio_set_pin_output(DISCHARGE_PIN);
+
+    wait_us(DISCHARGE_TIME_US);
+ }
 
  // Сканирование конкретного датчика по адресу в матрице
  uint16_t ec_sw_scan(uint8_t col, uint8_t row){
@@ -76,6 +97,32 @@ void pins_init(void){
 
     return raw_adc_readings;
  }
+
+ void ec_bottom_sample(void){
+
+    uint16_t raw_adc_readings = 0;
+    for (uint8_t col = 0; col < MATRIX_COLS; col++)
+    {
+        for (uint8_t row = 0; row < MATRIX_ROWS; row++)
+        {
+            ec_bottom_threshold[col][row] = 0;
+        }
+    }
+    
+    for (uint8_t col = 0; col < MATRIX_COLS; col++)
+    {
+        for (uint8_t row = 0; row < MATRIX_ROWS; row++)
+        {
+            raw_adc_readings = ec_sw_scan(col, row);
+            if (raw_adc_readings > ec_bottom_threshold[col][row])
+            {
+                ec_bottom_threshold[col][row] = raw_adc_readings;
+            } 
+        }
+    }
+
+ }
+
  // Семплинг и запись порога шума для каждого датчика
  void ec_noise_sample(void){
 
@@ -83,7 +130,7 @@ void pins_init(void){
     {
         for (uint8_t row = 0; row < MATRIX_ROWS; row++)
         {
-            ec_noise_treshold[col][row] = 0;
+            ec_noise_threshold[col][row] = 0;
         }
     }
    
@@ -93,7 +140,7 @@ void pins_init(void){
         {
             for (uint8_t row = 0; row < MATRIX_ROWS; row++)
             {
-                ec_noise_treshold[col][row] += ec_sw_scan(col, row);
+                ec_noise_threshold[col][row] += ec_sw_scan(col, row);
             }
         }
     }
@@ -102,14 +149,15 @@ void pins_init(void){
     {
         for (uint8_t row = 0; row < MATRIX_ROWS; row++)
         {
-            ec_noise_treshold[col][row] /= NOISE_THRESHOLD_SAMPLING_COUNT;
-            ec_noise_treshold[col][row] += NOISE_OFFSET;
+            ec_noise_threshold[col][row] /= NOISE_THRESHOLD_SAMPLING_COUNT;
+            ec_noise_threshold[col][row] += NOISE_OFFSET;
         }
     }
  }
 
  // Функция сканирования и обновления current matrix
  bool ec_matrix_scan(matrix_row_t current_matrix[]){
+
     bool has_changed = false;
 
     for (uint8_t col = 0; col < MATRIX_COLS; col++)
@@ -119,7 +167,7 @@ void pins_init(void){
             uint16_t raw_adc_readings = ec_sw_scan(col, row); // Получаем данные сканирования конкретного датчика
             uint8_t key_previous_state = (current_matrix[row] >> col) & 1; // Запрашиваем текущее состояние клавиши (нажата или отпущена)
 
-            if (raw_adc_readings < ec_noise_treshold[col][row])
+            if (raw_adc_readings < ec_noise_threshold[col][row])
             {
                 continue;
             }
@@ -135,6 +183,7 @@ void pins_init(void){
             }
         }
     }
+
     return has_changed;
  }
 
@@ -144,10 +193,11 @@ void matrix_init_custom(void) {
     adc_int();
     pins_init();
     ec_noise_sample();
-
 }
+
  // Сканирование матрицы СТАНДАРТНАЯ
 bool matrix_scan_custom(matrix_row_t current_matrix[]) {
+
     bool matrix_has_changed = ec_matrix_scan(current_matrix);
 
     logger();

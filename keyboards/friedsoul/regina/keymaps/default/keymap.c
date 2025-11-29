@@ -4,13 +4,7 @@
 #include QMK_KEYBOARD_H
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
-    /*
-     * ┌───┬───┬───┐
-     * │ A │ B │ C │
-     * ├───┼───┼───┤
-     * │ D │ E │ F │
-     * └───┴───┴───┘
-     */
+   
     [0] = LAYOUT_macro_1x5(
         KC_1,
         KC_2,
