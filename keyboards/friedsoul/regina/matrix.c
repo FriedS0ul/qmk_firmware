@@ -34,7 +34,7 @@ void pins_init(void){
  // Вывод сканирования в консоль каждые 1000 циклов
  void logger(void){
 
-    if (scan_counter == 1000)
+    if (scan_counter == 999)
     {
         uprintf("\r\n");
         for (uint8_t col = 0; col < MATRIX_COLS; col++)
