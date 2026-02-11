@@ -9,7 +9,8 @@
         "extrakey": true,
         "mousekey": true,
         "nkro": true,
-        "rgblight": false
+        "rgblight": false,
+        "backlight": false
     },
     
     "processor": "STM32G431",
