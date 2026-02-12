@@ -5,6 +5,14 @@ CUSTOM_MATRIX = lite
 
 ANALOG_DRIVER_REQUIRED = yes
 
-SRC += matrix.c
-
 CONSOLE_ENABLE = yes
+
+BACKLIGHT_ENABLE = no
+
+RGBLIGHT_ENABLE = no
+
+RGB_MATRIX_ENABLE = no
+
+LED_MATRIX_ENABLE = no
+
+SRC += matrix.c
