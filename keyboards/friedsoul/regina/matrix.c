@@ -198,7 +198,7 @@ void matrix_init_custom(void) {
 bool matrix_scan_custom(matrix_row_t current_matrix[]) {
 
     bool matrix_has_changed = ec_matrix_scan(current_matrix);
-
+    
     logger();
 
     return matrix_has_changed;

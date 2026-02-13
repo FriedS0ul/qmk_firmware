@@ -51,13 +51,13 @@
             "label": "EC TOOLS",
             "content": [
                 {
-                    "label": "Calibration",
+                    "label": "Console log",
                     "content": [
                         {
                             "label": "Toggle on / off",
                             "type": "toggle",
                             "content": [
-                                "id_toggle_onoff",
+                                "id_console_log_onoff",
                                 0,
                                 1
                             ]
