@@ -12,7 +12,6 @@ static uint16_t ec_noise_threshold[MATRIX_COLS][MATRIX_ROWS];
 static uint16_t ec_bottom_threshold[MATRIX_COLS][MATRIX_ROWS];
 static uint16_t scan_counter = 0;
 
-
 void adc_int(void){
 
     palSetLineMode(ANALOG_READINGS_INPUT, PAL_MODE_INPUT_ANALOG);
