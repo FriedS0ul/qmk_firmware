@@ -5,6 +5,7 @@
 #include "gpio.h"
 #include "analog.h"
 #include <print.h>
+#include "eeprom_config.h"
 
 const pin_t row_pins [] = MATRIX_ROW_PINS;
 static uint16_t log_matrix[MATRIX_COLS][MATRIX_ROWS];
@@ -198,7 +199,9 @@ bool matrix_scan_custom(matrix_row_t current_matrix[]) {
 
     bool matrix_has_changed = ec_matrix_scan(current_matrix);
     
-    logger();
+    if (custom_eeconfig.console_log_status){
+        logger();
+    }
 
     return matrix_has_changed;
 }

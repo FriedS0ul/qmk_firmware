@@ -7,4 +7,4 @@ ANALOG_DRIVER_REQUIRED = yes
 
 CONSOLE_ENABLE = yes
 
-SRC += matrix.c
+SRC += matrix.c eeprom_handler.c

@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include "config.h"
 
+
 // Структура для записи/чтения данных из eeprom
 typedef struct{
     bool console_log_status; // Включен ли вывод лога сканирования в консоль
