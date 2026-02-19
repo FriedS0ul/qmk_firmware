@@ -1,12 +1,8 @@
 
 #include "via.h"
 #include "config.h"
+#include "eeprom_config.h"
 
-uint8_t console_log_status;
-uint8_t calibration_status;
-
-uint16_t actuation_level;
-uint16_t release_level; 
 
 
 // Переменные - ID для дополнительных элементов меню в VIA
@@ -27,13 +23,13 @@ void via_custom_config_kb_to_via(uint8_t *data){
     {
     case id_console_log_onoff:
 
-        *value_data == console_log_status;
+        *value_data == eeprom_config.console_log_status;
 
         break;
 
     case id_calibration_onoff:
         
-        *value_data == calibration_status;
+        *value_data == runtime_config.calibration_status;
         break;
     
     default:

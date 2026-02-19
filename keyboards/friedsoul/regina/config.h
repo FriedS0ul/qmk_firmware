@@ -15,16 +15,17 @@
 // NUMBERS
 #define DISCHARGE_TIME_US 10
 
-#define NOISE_THRESHOLD_SAMPLING_COUNT 40
+#define BOTTOM_LEVEL_SAMPLING_COUNT 50
 #define NOISE_OFFSET 50
 
-#define ACTUATION_LEVEL 500
-#define RELEASE_LEVEL 450
-
-#define DEFAULT_ACTUATION_LEVEL 500
-#define DEFAULT_RELEASE_LEVEL 450
+#define DEFAULT_ACTUATION_LEVEL 300
+#define DEFAULT_RELEASE_LEVEL 250
 #define DEFAULT_CEILING_LEVEL 1023
-#define DEFAULT_CONSOLE_LOG_STATUS false
+
+#define DEFAULT_CONSOLE_LOG_STATUS 2 // 1 - Данные порогов матрицы, 2 - Данные сканирования 
+#define CONSOLE_LOG_FREQUENCY 5000 // Раз в сколько полных сканирований матрицы данные будут выводится в консоль. Частота зависит от размера матрица. Рекомендую не ниже 1000
+
+
 #define DEFAULT_CALIBRATION_STATUS false
 
 #define EECONFIG_KB_DATA_SIZE 128

@@ -7,76 +7,78 @@
 #include <print.h>
 #include "eeprom_config.h"
 
-const pin_t row_pins [] = MATRIX_ROW_PINS;
-static uint16_t log_matrix[MATRIX_COLS][MATRIX_ROWS];
-static uint16_t ec_noise_threshold[MATRIX_COLS][MATRIX_ROWS];
-static uint16_t ec_bottom_threshold[MATRIX_COLS][MATRIX_ROWS];
-static uint16_t scan_counter = 0;
+static const pin_t row_pins[] = MATRIX_ROW_PINS;
+static uint16_t    log_matrix[MATRIX_COLS][MATRIX_ROWS];
+static uint16_t    scan_counter = 0;
 
-void adc_int(void){
+eeprom_config_t     eeprom_config;
+runtime_config_kb_t runtime_config;
 
+void adc_int(void) {
     palSetLineMode(ANALOG_READINGS_INPUT, PAL_MODE_INPUT_ANALOG);
 }
 
-void pins_init(void){
-
+void pins_init(void) {
     gpio_write_pin_low(DISCHARGE_PIN);
     gpio_set_pin_output(DISCHARGE_PIN);
 
-    for (uint8_t i = 0; i < MATRIX_ROWS; i++)
-    {
+    for (uint8_t i = 0; i < MATRIX_ROWS; i++) {
         gpio_write_pin_low(row_pins[i]);
         gpio_set_pin_output(row_pins[i]);
-        
     }
 }
 
- // Вывод сканирования в консоль каждые 1000 циклов
- void logger(void){
+// Вывод каждого N - сканирования в консоль
+void logger(void) {
+    if (scan_counter < CONSOLE_LOG_FREQUENCY) {
+        scan_counter++;
+    } else {
+        switch (eeprom_config.console_log_status) {
+            case 1:
+                for (uint8_t col = 0; col < MATRIX_COLS; col++) {
+                    for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
+                        uprintf("%d, %d Floor: %d Ceiling: %d Actuation: %d Release: %d", col, row, runtime_config.floor_level_per_key[col][row], eeprom_config.ceiling_level_per_key[col][row], runtime_config.actuation_level_per_key[col][row], runtime_config.release_level_per_key[col][row]);
+                        uprintf("\r\n");
+                    }
+                }
+                break;
 
-    if (scan_counter == 999)
-    {
-        uprintf("\r\n");
-        for (uint8_t col = 0; col < MATRIX_COLS; col++)
-        {
-            for (uint8_t row = 0; row < MATRIX_ROWS; row++)
-            {
-                uprintf("COL %d ROW %d: %u", col, row, log_matrix[col][row]);
+            case 2:
                 uprintf("\r\n");
-            }
+                for (uint8_t col = 0; col < MATRIX_COLS; col++) {
+                    for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
+                        uprintf("COL %d ROW %d: %u", col, row, log_matrix[col][row]);
+                        uprintf("\r\n");
+                    }
+                }
+                break;
+
+            default:
+                break;
         }
         scan_counter = 0;
     }
-    else
-    {
-        scan_counter++;
-    }
- }
+}
 
- // Линейная интерполяция: Y = Y1 + (Y2 - Y1) * ((X - X1) / (X2 - X1))
- 
- // Зарядка ряда для сканирования 
- void ec_sw_charge(uint8_t row){
-
+// Зарядка ряда для сканирования
+void ec_sw_charge(uint8_t row) {
     gpio_write_pin_high(row_pins[row]);
 
     gpio_set_pin_input(DISCHARGE_PIN);
- }
+}
 
- // Разрядка COM линии после сканирования
- void ec_sw_discharge(uint8_t row){
-
+// Разрядка COM линии после сканирования
+void ec_sw_discharge(uint8_t row) {
     gpio_write_pin_low(row_pins[row]);
 
     gpio_write_pin_low(DISCHARGE_PIN);
     gpio_set_pin_output(DISCHARGE_PIN);
 
     wait_us(DISCHARGE_TIME_US);
- }
+}
 
- // Сканирование конкретного датчика по адресу в матрице
- uint16_t ec_sw_scan(uint8_t col, uint8_t row){
-
+// Сканирование конкретного датчика по адресу в матрице
+uint16_t ec_sw_scan(uint8_t col, uint8_t row) {
     uint16_t raw_adc_readings = 0;
 
     gpio_write_pin_low(row_pins[row]);
@@ -85,7 +87,7 @@ void pins_init(void){
 
     gpio_write_pin_high(row_pins[row]);
 
-    raw_adc_readings = analogReadPin(ANALOG_READINGS_INPUT);
+    raw_adc_readings = analogReadPin(ANALOG_READINGS_INPUT); // Возможно стоит сделать атомарный блок для сканирования + еще поработать над логикой для минимизации шума
 
     gpio_write_pin_low(DISCHARGE_PIN);
     gpio_set_pin_output(DISCHARGE_PIN);
@@ -95,113 +97,68 @@ void pins_init(void){
     log_matrix[col][row] = raw_adc_readings; // Логирования сканирований
 
     return raw_adc_readings;
- }
+}
 
- void ec_bottom_sample(void){
-
+// Семплинг нижнего порога клавиши (В покое)
+void ec_floor_sample(void) {
     uint16_t raw_adc_readings = 0;
-    for (uint8_t col = 0; col < MATRIX_COLS; col++)
-    {
-        for (uint8_t row = 0; row < MATRIX_ROWS; row++)
-        {
-            ec_bottom_threshold[col][row] = 0;
-        }
-    }
-    
-    for (uint8_t col = 0; col < MATRIX_COLS; col++)
-    {
-        for (uint8_t row = 0; row < MATRIX_ROWS; row++)
-        {
-            raw_adc_readings = ec_sw_scan(col, row);
-            if (raw_adc_readings > ec_bottom_threshold[col][row])
-            {
-                ec_bottom_threshold[col][row] = raw_adc_readings;
-            } 
+
+    for (uint8_t col = 0; col < MATRIX_COLS; col++) {
+        for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
+            runtime_config.floor_level_per_key[col][row] = 0;
         }
     }
 
- }
-
- // Семплинг и запись порога шума для каждого датчика
- void ec_noise_sample(void){
-
-    for (uint8_t col = 0; col < MATRIX_COLS; col++)
-    {
-        for (uint8_t row = 0; row < MATRIX_ROWS; row++)
-        {
-            ec_noise_threshold[col][row] = 0;
-        }
-    }
-   
-    for (uint8_t sample = 0; sample < NOISE_THRESHOLD_SAMPLING_COUNT; sample++)
-    {
-        for (uint8_t col = 0; col < MATRIX_COLS; col++)
-        {
-            for (uint8_t row = 0; row < MATRIX_ROWS; row++)
-            {
-                ec_noise_threshold[col][row] += ec_sw_scan(col, row);
+    for (uint8_t count = 0; count < BOTTOM_LEVEL_SAMPLING_COUNT; count++) {
+        for (uint8_t col = 0; col < MATRIX_COLS; col++) {
+            for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
+                raw_adc_readings = ec_sw_scan(col, row);
+                if (raw_adc_readings > runtime_config.floor_level_per_key[col][row]) {
+                    runtime_config.floor_level_per_key[col][row] = raw_adc_readings;
+                }
             }
         }
     }
+}
 
-    for (uint8_t col = 0; col < MATRIX_COLS; col++)
-    {
-        for (uint8_t row = 0; row < MATRIX_ROWS; row++)
-        {
-            ec_noise_threshold[col][row] /= NOISE_THRESHOLD_SAMPLING_COUNT;
-            ec_noise_threshold[col][row] += NOISE_OFFSET;
-        }
-    }
- }
-
- // Функция сканирования и обновления current matrix
- bool ec_matrix_scan(matrix_row_t current_matrix[]){
-
+// Функция сканирования и обновления current matrix
+bool ec_matrix_scan(matrix_row_t current_matrix[]) {
     bool has_changed = false;
 
-    for (uint8_t col = 0; col < MATRIX_COLS; col++)
-    {
-        for (uint8_t row = 0; row < MATRIX_ROWS; row++)
-        {
-            uint16_t raw_adc_readings = ec_sw_scan(col, row); // Получаем данные сканирования конкретного датчика
-            uint8_t key_previous_state = (current_matrix[row] >> col) & 1; // Запрашиваем текущее состояние клавиши (нажата или отпущена)
+    for (uint8_t col = 0; col < MATRIX_COLS; col++) {
+        for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
+            uint16_t raw_adc_readings   = ec_sw_scan(col, row);             // Получаем данные сканирования конкретного датчика
+            uint8_t  key_previous_state = (current_matrix[row] >> col) & 1; // Запрашиваем текущее состояние клавиши (нажата или отпущена)
 
-            if (raw_adc_readings < ec_noise_threshold[col][row])
+            if (raw_adc_readings <= runtime_config.floor_level_per_key[col][row]) // Отбрасывает, если меньше уровня шума
             {
                 continue;
-            }
-            else if (raw_adc_readings > ACTUATION_LEVEL && key_previous_state == 0)
-            {
+            } else if (raw_adc_readings > runtime_config.actuation_level_per_key[col][row] && key_previous_state == 0) {
                 current_matrix[row] |= (1 << col); // Нажимаем
                 has_changed = true;
-            } 
-            else if (raw_adc_readings < RELEASE_LEVEL && key_previous_state == 1)
-            {
-               current_matrix[row] &= ~(1 << col); // Отпускаем
-               has_changed = true;
+            } else if (raw_adc_readings < runtime_config.release_level_per_key[col][row] && key_previous_state == 1) {
+                current_matrix[row] &= ~(1 << col); // Отпускаем
+                has_changed = true;
             }
         }
     }
 
     return has_changed;
- }
-
- // Инициализация матрицы СТАНДАРТНАЯ
-void matrix_init_custom(void) {
-
-    adc_int();
-    pins_init();
-    ec_noise_sample();
 }
 
- // Сканирование матрицы СТАНДАРТНАЯ
+// Инициализация матрицы СТАНДАРТНАЯ
+void matrix_init_custom(void) {
+    adc_int();
+
+    pins_init();
+
+    ec_floor_sample();
+}
+
+// Сканирование матрицы СТАНДАРТНАЯ
 bool matrix_scan_custom(matrix_row_t current_matrix[]) {
-
     bool matrix_has_changed = ec_matrix_scan(current_matrix);
-    
-    if (custom_eeconfig.console_log_status){
-        logger();
-    }
 
+    logger();
     return matrix_has_changed;
 }
