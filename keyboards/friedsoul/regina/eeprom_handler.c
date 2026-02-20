@@ -3,12 +3,23 @@
 #include "eeconfig.h"
 
 // Запись eeprom_config в eeprom
-static void save_to_eeprom(void) {
+void save_to_eeprom(void) {
+    /*
+    eeprom_config.console_log_status = runtime_config.console_log_status;
+    eeprom_config.actuation_level_global = runtime_config.actuation_level_global;
+    eeprom_config.release_level_global = runtime_config.release_level_global;
+
+    for (uint8_t col = 0; col < MATRIX_COLS; col++){
+        for (uint8_t row = 0; row < MATRIX_ROWS; row++){
+            eeprom_config.ceiling_level_per_key[col][row] = runtime_config.ceiling_level_per_key[col][row];
+        }
+    }
+        */
     eeconfig_update_kb_datablock(&eeprom_config, 0, sizeof(eeprom_config));
 }
 
 // Чтение данных из eeprom и запись в eeprom_config
-static void read_from_eeprom(void) {
+void read_from_eeprom(void) {
     eeconfig_read_kb_datablock(&eeprom_config, 0, sizeof(eeprom_config));
 }
 
@@ -17,7 +28,7 @@ uint16_t interpolate(uint16_t Y_start, uint16_t Y_finish, uint16_t X, uint16_t X
     return Y_start + ((X - X_start) * (Y_finish - Y_start)) / (X_finish - X_start);
 }
 
-// Функция записи дефолтных значений в eeprom при первом запуске или после полного сброса контроллера
+// Функция записи дефолтных значений в eeprom при первом запуске или после полного сброса контроллера (НУЖНО СДЕЛАТЬ ПЕРЕЗАПИСЬ ДЕФОЛТАМИ ПРИ НЕСОВПАДЕНИИ ВЕРСИИ ПРОШИВКИ)
 void eeconfig_init_kb(void) {
     eeprom_config.console_log_status     = DEFAULT_CONSOLE_LOG_STATUS; // Включен ли вывод лога сканирования в консоль
     eeprom_config.actuation_level_global = DEFAULT_ACTUATION_LEVEL;    // Точка активации

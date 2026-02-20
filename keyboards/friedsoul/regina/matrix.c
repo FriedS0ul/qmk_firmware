@@ -11,8 +11,8 @@ static const pin_t row_pins[] = MATRIX_ROW_PINS;
 static uint16_t    log_matrix[MATRIX_COLS][MATRIX_ROWS];
 static uint16_t    scan_counter = 0;
 
-eeprom_config_t     eeprom_config;
-runtime_config_kb_t runtime_config;
+eeprom_config_t  eeprom_config;
+runtime_config_t runtime_config;
 
 void adc_int(void) {
     palSetLineMode(ANALOG_READINGS_INPUT, PAL_MODE_INPUT_ANALOG);
@@ -51,6 +51,11 @@ void logger(void) {
                         uprintf("\r\n");
                     }
                 }
+                break;
+
+            case 3:
+                uprintf("\r\n");
+                printf("%zu", sizeof(eeprom_config));
                 break;
 
             default:

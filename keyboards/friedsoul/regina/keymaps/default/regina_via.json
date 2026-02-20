@@ -6,6 +6,48 @@
         "rows": 5,
         "cols": 1
     },
+    "menus": [
+        {
+            "label": "CUSTOM TOOLS",
+            "content": [
+                {
+                    "label": "Misc",
+                    "content": [
+                        {
+                            "label": "Console log on / off",
+                            "type": "toggle",
+                            "content": [
+                                "id_console_log_status",
+                                0,
+                                2
+                            ]
+                        },
+                        {
+                            "label": "Calibration on / off",
+                            "type": "toggle",
+                            "content": [
+                                "id_calibration_status",
+                                0,
+                                3
+                            ]
+                        },
+                        {
+                            "label": "Save",
+                            "type": "button",
+                            "options": [
+                                1
+                            ],
+                            "content": [
+                                "id_save_to_eeprom",
+                                0,
+                                1
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
     "layouts": {
         "labels": [
             "ANSI Enter"
@@ -45,36 +87,5 @@
                 "2,0\n\n\n0,1"
             ]
         ]
-    },
-    "menus": [
-        {
-            "label": "EC TOOLS",
-            "content": [
-                {
-                    "label": "Console log",
-                    "content": [
-                        {
-                            "label": "Toggle on / off",
-                            "type": "toggle",
-                            "content": [
-                                "id_console_log_onoff",
-                                0,
-                                1
-                            ]
-                        },
-                        {
-                            "label": "Save",
-                            "type": "button",
-                            "options": [1],
-                            "content": [
-                                "id_custom_save",
-                                0,
-                                9
-                            ]
-                        }
-                    ]
-                }
-            ]
-        }
-    ]
+    }
 }
