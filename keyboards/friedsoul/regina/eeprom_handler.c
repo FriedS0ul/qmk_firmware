@@ -44,6 +44,7 @@ void read_from_eeprom(void) {
 
 // Функция записи дефолтных значений в eeprom при первом запуске или после полного сброса контроллера (НУЖНО СДЕЛАТЬ ПЕРЕЗАПИСЬ ДЕФОЛТАМИ ПРИ НЕСОВПАДЕНИИ ВЕРСИИ ПРОШИВКИ)
 void eeconfig_init_kb(void) {
+    eeprom_config.fw_level_number = FIRMWARE_LEVEL_NUMBER;
     eeprom_config.console_log_status     = DEFAULT_CONSOLE_LOG_STATUS; // Включен ли вывод лога сканирования в консоль
     eeprom_config.actuation_level_global = DEFAULT_ACTUATION_LEVEL;    // Точка активации
     eeprom_config.release_level_global   = DEFAULT_RELEASE_LEVEL;      // Точка деактивации

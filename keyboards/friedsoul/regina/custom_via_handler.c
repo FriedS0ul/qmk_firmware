@@ -2,13 +2,15 @@
 #include "via.h"
 #include "config.h"
 #include "eeprom_config.h"
-#include <print.h>
 
 // Переменные - ID для дополнительных элементов меню в VIA
 enum via_extras_value_ids {
+
     id_save_to_eeprom = 1,
     id_console_log_status = 2,
-    id_calibration_status = 3
+    id_calibration_status = 3,
+    id_actuation_level = 4,
+    id_release_level = 5
 
 };
 
@@ -28,6 +30,18 @@ void via_custom_config_via_to_kb(uint8_t *data) {
         case id_calibration_status:
 
             runtime_config.calibration_status = *value_data;
+
+            break;
+
+        case id_actuation_level:
+
+            runtime_config.actuation_level_global = value_data[0] << 8 | value_data[1];
+
+            break;
+
+        case id_release_level:
+
+            runtime_config.release_level_global = value_data[0] << 8 | value_data[1];
 
             break;
 
@@ -61,6 +75,21 @@ void via_custom_config_via_from_kb(uint8_t *data) {
             *value_data = runtime_config.calibration_status;
 
             break;
+
+        case id_actuation_level:
+
+            value_data[0] = runtime_config.actuation_level_global >> 8;
+            value_data[1] = runtime_config.actuation_level_global & 0xFF;
+
+            break;
+
+        case id_release_level:
+
+            value_data[0] = runtime_config.release_level_global >> 8;
+            value_data[1] = runtime_config.release_level_global & 0xFF;
+
+            break;
+        
 
         default:
             // Ничего

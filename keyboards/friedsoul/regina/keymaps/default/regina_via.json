@@ -79,6 +79,49 @@
                             ]
                         }
                     ]
+                },
+                {
+                    "label": "Travel setup",
+                    "content": [
+                        {
+                            "label": "Actuation level (Always > Release level)",
+                            "type": "range",
+                            "options": [
+                                0,
+                                1023
+                            ],
+                            "content": [
+                                "id_actuation_level",
+                                0,
+                                4
+                            ]
+                        },
+                        {
+                            "label": "Release level (Always < Actuation level)",
+                            "type": "range",
+                            "options": [
+                                0,
+                                1023
+                            ],
+                            "content": [
+                                "id_release_level",
+                                0,
+                                5
+                            ]
+                        },
+                        {
+                            "label": "Save",
+                            "type": "button",
+                            "options": [
+                                1
+                            ],
+                            "content": [
+                                "id_save_to_eeprom",
+                                0,
+                                1
+                            ]
+                        }
+                    ]
                 }
             ]
         }

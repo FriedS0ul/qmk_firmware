@@ -7,4 +7,4 @@ ANALOG_DRIVER_REQUIRED = yes
 
 CONSOLE_ENABLE = yes
 
-SRC += matrix.c eeprom_handler.c custom_via.c
+SRC += matrix.c eeprom_handler.c custom_via_handler.c

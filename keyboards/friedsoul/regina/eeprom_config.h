@@ -8,6 +8,7 @@
 
 // Структура для записи/чтения данных из eeprom
 typedef struct {
+    uint8_t fw_level_number; // Версия прошивки
     uint8_t console_log_status; // Статус лога в консоль
     uint16_t ceiling_level_per_key[MATRIX_COLS][MATRIX_ROWS]; // Максимальное значение клавиши (Полностью нажата)
     uint16_t actuation_level_global; // Точка активации глобальная 0 - 1023
@@ -16,6 +17,7 @@ typedef struct {
 
 extern eeprom_config_t eeprom_config;
 
+// Структура для runtime данных, обновляется при сохранении в eeprom
 typedef struct {
     bool is_valid;
     bool calibration_status; // Включена ли глобальная калибровка порогов // true - калибровка активна, false - калибровка неактивна 
