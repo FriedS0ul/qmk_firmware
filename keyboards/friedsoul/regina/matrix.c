@@ -33,11 +33,12 @@ void logger(void) {
     if (scan_counter < CONSOLE_LOG_FREQUENCY) {
         scan_counter++;
     } else {
-        switch (eeprom_config.console_log_status) {
+        switch (runtime_config.console_log_status) {
             case 1:
+                uprintf("\r\n");
                 for (uint8_t col = 0; col < MATRIX_COLS; col++) {
                     for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
-                        uprintf("%d, %d Floor: %d Ceiling: %d Actuation: %d Release: %d", col, row, runtime_config.floor_level_per_key[col][row], eeprom_config.ceiling_level_per_key[col][row], runtime_config.actuation_level_per_key[col][row], runtime_config.release_level_per_key[col][row]);
+                        uprintf("%d, %d Floor: %d Ceiling: %d Actuation: %d Release: %d", col, row, runtime_config.floor_level_per_key[col][row], runtime_config.ceiling_level_per_key[col][row], runtime_config.actuation_level_per_key[col][row], runtime_config.release_level_per_key[col][row]);
                         uprintf("\r\n");
                     }
                 }
@@ -55,7 +56,12 @@ void logger(void) {
 
             case 3:
                 uprintf("\r\n");
-                printf("%zu", sizeof(eeprom_config));
+                uprintf("eeprom_config size: %zu\n", sizeof(eeprom_config));
+                uprintf("console_log_status %d\n", eeprom_config.console_log_status);
+                uprintf("actuation_level_global %d\n", eeprom_config.actuation_level_global);
+                uprintf("release_level_global %d\n", eeprom_config.release_level_global);
+                uprintf("actuation_level_per_key...");
+                uprintf("\r\n");
                 break;
 
             default:
@@ -128,15 +134,33 @@ void ec_floor_sample(void) {
 
 // Функция сканирования и обновления current matrix
 bool ec_matrix_scan(matrix_row_t current_matrix[]) {
-    bool has_changed = false;
+    bool     has_changed = false;
+    uint16_t raw_adc_readings;
+    uint8_t  key_previous_state;
 
     for (uint8_t col = 0; col < MATRIX_COLS; col++) {
         for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
-            uint16_t raw_adc_readings   = ec_sw_scan(col, row);             // Получаем данные сканирования конкретного датчика
-            uint8_t  key_previous_state = (current_matrix[row] >> col) & 1; // Запрашиваем текущее состояние клавиши (нажата или отпущена)
+            raw_adc_readings = ec_sw_scan(col, row); // Получаем данные сканирования конкретного датчика
 
-            if (raw_adc_readings <= runtime_config.floor_level_per_key[col][row]) // Отбрасывает, если меньше уровня шума
-            {
+            if (runtime_config.calibration_status) {
+                if (runtime_config.calibration_status_per_key[col][row]) {
+                    runtime_config.ceiling_level_per_key[col][row]       = 0;
+                    runtime_config.ceiling_level_per_key[col][row]       = raw_adc_readings;
+                    runtime_config.calibration_status_per_key[col][row] = false;
+
+                    return has_changed;
+                } 
+
+                if (runtime_config.ceiling_level_per_key[col][row] < raw_adc_readings) {
+                    runtime_config.ceiling_level_per_key[col][row] = raw_adc_readings;
+
+                    return has_changed;
+                }
+            }
+
+            key_previous_state = (current_matrix[row] >> col) & 1; // Запрашиваем текущее состояние клавиши (нажата или отпущена)
+
+            if (raw_adc_readings <= runtime_config.floor_level_per_key[col][row]) { // Отбрасывает, если меньше уровня шума
                 continue;
             } else if (raw_adc_readings > runtime_config.actuation_level_per_key[col][row] && key_previous_state == 0) {
                 current_matrix[row] |= (1 << col); // Нажимаем

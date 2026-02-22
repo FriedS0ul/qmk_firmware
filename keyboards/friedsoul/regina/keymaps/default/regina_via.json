@@ -8,14 +8,32 @@
     },
     "menus": [
         {
-            "label": "CUSTOM TOOLS",
+            "label": "CUSTOM",
             "content": [
                 {
                     "label": "Misc",
                     "content": [
                         {
-                            "label": "Console log on / off",
-                            "type": "toggle",
+                            "label": "Console state",
+                            "type": "dropdown",
+                            "options": [
+                                [
+                                    "OFF",
+                                    0
+                                ],
+                                [
+                                    "Matrix tresholds data",
+                                    1
+                                ],
+                                [
+                                    "Matrix scan data",
+                                    2
+                                ],
+                                [
+                                    "EEPROM size + content",
+                                    3
+                                ]
+                            ],
                             "content": [
                                 "id_console_log_status",
                                 0,
@@ -23,7 +41,24 @@
                             ]
                         },
                         {
-                            "label": "Calibration on / off",
+                            "label": "Save",
+                            "type": "button",
+                            "options": [
+                                1
+                            ],
+                            "content": [
+                                "id_save_to_eeprom",
+                                0,
+                                1
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "label": "Calibration",
+                    "content": [
+                        {
+                            "label": "Calibration status",
                             "type": "toggle",
                             "content": [
                                 "id_calibration_status",

@@ -2,6 +2,7 @@
 #include "via.h"
 #include "config.h"
 #include "eeprom_config.h"
+#include <print.h>
 
 // Переменные - ID для дополнительных элементов меню в VIA
 enum via_extras_value_ids {
@@ -20,7 +21,7 @@ void via_custom_config_via_to_kb(uint8_t *data) {
     switch (*value_id) {
         case id_console_log_status:
 
-            eeprom_config.console_log_status = *value_data;
+            runtime_config.console_log_status = *value_data;
 
             break;
 
@@ -67,14 +68,12 @@ void via_custom_config_via_from_kb(uint8_t *data) {
     }
 }
 
-void via_custom_config_save(uint8_t *data) {}
-
 // Функция обмена данными между клавиатурой и VIA + сохранение данных в eeprom
 void via_custom_value_command_kb(uint8_t *data, uint8_t lenght) {
     // data = [ command_id, channel_id, value_id, value_data ]
     uint8_t *command_id        = &(data[0]);
     uint8_t *channel_id        = &(data[1]);
-    uint8_t *value_id_and_data = &(data[3]);
+    uint8_t *value_id_and_data = &(data[2]); 
 
     if (*channel_id == id_custom_channel) {
         switch (*command_id) {
@@ -95,12 +94,12 @@ void via_custom_value_command_kb(uint8_t *data, uint8_t lenght) {
                 break;
 
             default:
-                // Ошибка
-                *command_id = id_unhandled;
+                // Ошибка по command_id
+                *command_id = 77;
                 break;
         }
+        return;
     }
-
-    // Ошибка
-    *command_id = id_unhandled;
+    // Ошибка по channel_id
+    *command_id = 66;
 }
