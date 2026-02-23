@@ -59,6 +59,7 @@ void logger(void) {
                     uprintf("\r\n");
                     uprintf("eeprom_config size: %zu\n", sizeof(eeprom_config));
                     uprintf("console_log_status %d\n", eeprom_config.console_log_status);
+                    uprintf("fw_level_number %d\n", eeprom_config.fw_level_number);
                     uprintf("actuation_level_global %d\n", eeprom_config.actuation_level_global);
                     uprintf("release_level_global %d\n", eeprom_config.release_level_global);
                     uprintf("actuation_level_per_key...");

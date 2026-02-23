@@ -5,6 +5,12 @@
 #include <stdbool.h>
 #include "config.h"
 
+/*
+bool - 1 байт (в структуре отругляется до 2 байт)
+unt8_t - 1 байт (в структуре отругляется до 2 байт)
+uint16_t - 2 байта
+*/
+
 
 // Структура для записи/чтения данных из eeprom
 typedef struct {
@@ -20,8 +26,8 @@ extern eeprom_config_t eeprom_config;
 // Структура для runtime данных, обновляется при сохранении в eeprom
 typedef struct {
     bool is_valid;
-    bool calibration_status; // Включена ли глобальная калибровка порогов // true - калибровка активна, false - калибровка неактивна 
-    bool calibration_status_per_key[MATRIX_COLS][MATRIX_ROWS]; // Статус калибровки конкретной клавиши // false - откалибровано, true - ожидает калибровку
+    bool calibration_status; // Включена ли глобальная калибровка порогов // true - калибровка активна, false - калибровка неактивна
+    bool calibration_status_per_key[MATRIX_COLS][MATRIX_ROWS]; // Статус калибровки конкретной клавиши // false - откалибровано, true - ожидает калибровку <- ПЕРЕПИСАТЬ ЭТУ ХУЙНЮ НА БИТОВУЮ МАТРИЦУ, КАК В current_matrix
     uint8_t console_log_status; // Статус лога в консоль
     uint16_t actuation_level_global; // Точка активации глобальная 0 - 1023
     uint16_t release_level_global; // Точка деактивации глобальная 0 - 1023
