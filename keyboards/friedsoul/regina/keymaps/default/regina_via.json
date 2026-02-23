@@ -30,7 +30,7 @@
                                     2
                                 ],
                                 [
-                                    "EEPROM size + content",
+                                    "EEPROM size + runtime_config",
                                     3
                                 ]
                             ],
@@ -50,6 +50,15 @@
                                 "id_save_to_eeprom",
                                 0,
                                 1
+                            ]
+                        },
+                        {
+                            "label": "Show experimental features",
+                            "type": "toggle",
+                            "content": [
+                                "id_experimental_features_status",
+                                0,
+                                6
                             ]
                         }
                     ]

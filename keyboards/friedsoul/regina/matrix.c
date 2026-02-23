@@ -58,11 +58,12 @@ void logger(void) {
                 case 3:
                     uprintf("\r\n");
                     uprintf("eeprom_config size: %zu\n", sizeof(eeprom_config));
-                    uprintf("console_log_status %d\n", eeprom_config.console_log_status);
+                    uprintf("\r\n");
                     uprintf("fw_level_number %d\n", eeprom_config.fw_level_number);
-                    uprintf("actuation_level_global %d\n", eeprom_config.actuation_level_global);
-                    uprintf("release_level_global %d\n", eeprom_config.release_level_global);
-                    uprintf("actuation_level_per_key...");
+                    uprintf("kb_current_operation_mode %d\n", runtime_config.kb_current_operation_mode);
+                    uprintf("console_log_status %d\n", runtime_config.console_log_status);
+                    uprintf("actuation_level_global %d\n", runtime_config.actuation_level_global);
+                    uprintf("release_level_global %d\n", runtime_config.release_level_global);
                     uprintf("\r\n");
                     break;
 
@@ -139,38 +140,51 @@ void ec_floor_sample(void) {
 bool ec_matrix_scan(matrix_row_t current_matrix[]) {
     bool     has_changed = false;
     uint16_t raw_adc_readings;
-    uint8_t  key_previous_state;
+    uint8_t  key_current_state;
 
     for (uint8_t col = 0; col < MATRIX_COLS; col++) {
         for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
-            raw_adc_readings = ec_sw_scan(col, row); // Получаем данные сканирования конкретного датчика
+            switch (runtime_config.kb_current_operation_mode) {
+                case 0: // Нормальная работа
 
-            if (runtime_config.calibration_status) {
-                if (runtime_config.calibration_status_per_key[col][row]) {
-                    runtime_config.ceiling_level_per_key[col][row]      = 0;
-                    runtime_config.ceiling_level_per_key[col][row]      = raw_adc_readings;
-                    runtime_config.calibration_status_per_key[col][row] = false;
+                    raw_adc_readings  = ec_sw_scan(col, row);             // Получаем данные сканирования конкретного датчика
+                    key_current_state = (current_matrix[row] >> col) & 1; // Запрашиваем текущее состояние клавиши (нажата или отпущена)
 
-                    return has_changed;
-                }
+                    if (raw_adc_readings <= runtime_config.floor_level_per_key[col][row]) { // Отбрасывает, если меньше уровня шума
+                        continue;
+                    } else if (raw_adc_readings > runtime_config.actuation_level_per_key[col][row] && key_current_state == 0) {
+                        current_matrix[row] |= (1 << col); // Нажимаем
+                        has_changed = true;
+                    } else if (raw_adc_readings < runtime_config.release_level_per_key[col][row] && key_current_state == 1) {
+                        current_matrix[row] &= ~(1 << col); // Отпускаем
+                        has_changed = true;
+                    }
 
-                if (runtime_config.ceiling_level_per_key[col][row] < raw_adc_readings) {
-                    runtime_config.ceiling_level_per_key[col][row] = raw_adc_readings;
+                    break;
 
-                    return has_changed;
-                }
-            }
+                case 1: // Калибровка порогов
 
-            key_previous_state = (current_matrix[row] >> col) & 1; // Запрашиваем текущее состояние клавиши (нажата или отпущена)
+                    raw_adc_readings = ec_sw_scan(col, row); // Получаем данные сканирования конкретного датчика
 
-            if (raw_adc_readings <= runtime_config.floor_level_per_key[col][row]) { // Отбрасывает, если меньше уровня шума
-                continue;
-            } else if (raw_adc_readings > runtime_config.actuation_level_per_key[col][row] && key_previous_state == 0) {
-                current_matrix[row] |= (1 << col); // Нажимаем
-                has_changed = true;
-            } else if (raw_adc_readings < runtime_config.release_level_per_key[col][row] && key_previous_state == 1) {
-                current_matrix[row] &= ~(1 << col); // Отпускаем
-                has_changed = true;
+                    if (!runtime_config.calibration_status_per_key[col][row]) {
+                        runtime_config.ceiling_level_per_key[col][row]      = 0;
+                        runtime_config.ceiling_level_per_key[col][row]      = raw_adc_readings;
+                        runtime_config.calibration_status_per_key[col][row] = false;
+                    }
+
+                    if (runtime_config.ceiling_level_per_key[col][row] < raw_adc_readings) {
+                        runtime_config.ceiling_level_per_key[col][row] = raw_adc_readings;
+                    }
+
+                    break;
+
+                case 2: // Запись SOCD
+
+                    break;
+
+                default:
+                    // ОшибкаЫ
+                    break;
             }
         }
     }

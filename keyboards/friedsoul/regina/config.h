@@ -24,7 +24,7 @@
 #define DEFAULT_CONSOLE_LOG_STATUS 2 // 0 - Выключено,  1 - Данные порогов матрицы, 2 - Данные сканирования, 3 - размер eeprom_config в байтах
 #define DEFAULT_CONSOLE_LOG_FREQUENCY 5000 // Раз в сколько полных сканирований матрицы данные будут выводится в консоль. Частота зависит от размера матрица. Рекомендую не ниже 1000
 
-#define DEFAULT_CALIBRATION_STATUS false
+#define DEFAULT_EXPERIMENTAL_FEATURES_STATUS false
 
 #define FIRMWARE_LEVEL_NUMBER 001
 #define EECONFIG_KB_DATA_SIZE 16

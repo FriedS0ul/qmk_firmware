@@ -6,8 +6,8 @@
 #include "config.h"
 
 /*
-bool - 1 байт (в структуре отругляется до 2 байт)
-unt8_t - 1 байт (в структуре отругляется до 2 байт)
+bool - 1 байт 
+unt8_t - 1 байт 
 uint16_t - 2 байта
 */
 
@@ -27,7 +27,9 @@ extern eeprom_config_t eeprom_config;
 typedef struct {
     bool is_valid;
     bool calibration_status; // Включена ли глобальная калибровка порогов // true - калибровка активна, false - калибровка неактивна
-    bool calibration_status_per_key[MATRIX_COLS][MATRIX_ROWS]; // Статус калибровки конкретной клавиши // false - откалибровано, true - ожидает калибровку <- ПЕРЕПИСАТЬ ЭТУ ХУЙНЮ НА БИТОВУЮ МАТРИЦУ, КАК В current_matrix
+    bool calibration_status_per_key[MATRIX_COLS][MATRIX_ROWS]; // Статус калибровки конкретной клавиши // false - ожидает калибровку, true - откалибровано <- ПЕРЕПИСАТЬ ЭТУ ХУЙНЮ НА БИТОВУЮ МАТРИЦУ, КАК В current_matrix
+    bool experimental_features_status; // Экспериментальные функции вкл/выкл
+    uint8_t kb_current_operation_mode; // 0 - Обычная работа, 1 - Калибровка порогов, 2 - Запись для SOCD
     uint8_t console_log_status; // Статус лога в консоль
     uint16_t actuation_level_global; // Точка активации глобальная 0 - 1023
     uint16_t release_level_global; // Точка деактивации глобальная 0 - 1023
