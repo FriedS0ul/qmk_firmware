@@ -139,6 +139,10 @@
                         {
                             "label": "SOCD Mapping",
                             "type": "toggle",
+                            "options": [
+                                0,
+                                2
+                            ],
                             "content": [
                                 "id_socd_status",
                                 0,

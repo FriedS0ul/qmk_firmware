@@ -15,6 +15,7 @@ void save_to_eeprom(void) {
     for (uint8_t col = 0; col < MATRIX_COLS; col++) {
         for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
             eeprom_config.ceiling_level_per_key[col][row] = runtime_config.ceiling_level_per_key[col][row];
+            eeprom_config.socd_status_per_key_bits[row]   = runtime_config.socd_status_per_key_bits[row];
             // Пересчитываем actuation и release при сохранении, сбрасываем флаги калибровки и режима работы
             runtime_config.kb_current_operation_mode            = 0;
             runtime_config.calibration_status_per_key_bits[row] = 0;
@@ -45,11 +46,12 @@ void read_from_eeprom(void) {
 // Функция записи дефолтных значений в eeprom при первом запуске или после полного сброса контроллера (НУЖНО СДЕЛАТЬ ПЕРЕЗАПИСЬ ДЕФОЛТАМИ ПРИ НЕСОВПАДЕНИИ ВЕРСИИ ПРОШИВКИ)
 void eeconfig_init_kb(void) {
     eeprom_config.fw_level_number        = FIRMWARE_LEVEL_NUMBER;
-    eeprom_config.console_log_status     = DEFAULT_CONSOLE_LOG_STATUS; 
+    eeprom_config.console_log_status     = DEFAULT_CONSOLE_LOG_STATUS;
     eeprom_config.actuation_level_global = DEFAULT_ACTUATION_LEVEL;
     eeprom_config.release_level_global   = DEFAULT_RELEASE_LEVEL;
     for (uint8_t col = 0; col < MATRIX_COLS; col++) {
         for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
+            eeprom_config.socd_status_per_key_bits[row]   = 0;
             eeprom_config.ceiling_level_per_key[col][row] = DEFAULT_CEILING_LEVEL; // Максимальное значение клавиши (Полностью нажата)
         }
     }
@@ -71,6 +73,7 @@ void keyboard_post_init_kb(void) {
     for (uint8_t col = 0; col < MATRIX_COLS; col++) {
         for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
             runtime_config.calibration_status_per_key_bits[row] = 0;
+            runtime_config.socd_status_per_key_bits[row]        = eeprom_config.socd_status_per_key_bits[row];
             runtime_config.ceiling_level_per_key[col][row]      = eeprom_config.ceiling_level_per_key[col][row];
             runtime_config.actuation_level_per_key[col][row]    = interpolate(runtime_config.floor_level_per_key[col][row], runtime_config.ceiling_level_per_key[col][row], runtime_config.actuation_level_global, 0, 1023);
             runtime_config.release_level_per_key[col][row]      = interpolate(runtime_config.floor_level_per_key[col][row], runtime_config.ceiling_level_per_key[col][row], runtime_config.release_level_global, 0, 1023);

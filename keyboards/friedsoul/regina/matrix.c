@@ -28,7 +28,7 @@ void pins_init(void) {
     }
 }
 
-// Вывод каждого N - сканирования в консоль
+// Вывод лога кажные N полных сканирований матрицы в консоль 
 void logger(void) {
     if (runtime_config.console_log_status != 0) {
         if (scan_counter < DEFAULT_CONSOLE_LOG_FREQUENCY) {
@@ -163,7 +163,7 @@ bool ec_matrix_scan(matrix_row_t current_matrix[]) {
 
                 case 1: // Калибровка порогов
                     
-                    uint8_t key_calibration_status = (runtime_config.calibration_status_per_key_bits[row] >> col) & 1; // Запрашиваем флаг калибровки конкретной клавиши
+                    uint8_t key_calibration_status = (runtime_config.calibration_status_per_key_bits[row] >> col) & 1; // Запрашиваем статус калибровки конкретной клавиши
                     raw_adc_readings = ec_sw_scan(col, row); // Получаем данные сканирования конкретного датчика
 
                     if (key_calibration_status == 0){
@@ -180,10 +180,12 @@ bool ec_matrix_scan(matrix_row_t current_matrix[]) {
 
                 case 2: // Запись SOCD
 
+                    uint8_t key_socd_status = (runtime_config.socd_status_per_key_bits[row] >> col) & 1; // Запрашиваем статус SOCD конкретной клавиши
+                    
                     break;
 
                 default:
-                    // ОшибкаЫ
+                    // Ошибка
                     break;
             }
         }

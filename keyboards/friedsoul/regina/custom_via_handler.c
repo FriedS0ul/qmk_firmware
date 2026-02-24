@@ -55,6 +55,8 @@ void via_custom_config_via_to_kb(uint8_t *data) {
 
         case id_socd_status:
 
+            runtime_config.kb_current_operation_mode = *value_data;
+
             break;
 
         case id_save_to_eeprom:
@@ -109,6 +111,8 @@ void via_custom_config_via_from_kb(uint8_t *data) {
             break;
 
         case id_socd_status:
+
+            *value_data = runtime_config.kb_current_operation_mode;
 
             break;
         
