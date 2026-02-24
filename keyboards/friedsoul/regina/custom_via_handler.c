@@ -11,7 +11,8 @@ enum via_extras_value_ids {
     id_calibration_status = 3,
     id_actuation_level = 4,
     id_release_level = 5,
-    id_experimental_features_status = 6
+    id_experimental_features_status = 6,
+    id_socd_status = 7
 
 };
 
@@ -30,8 +31,6 @@ void via_custom_config_via_to_kb(uint8_t *data) {
 
         case id_calibration_status:
 
-            //runtime_config.calibration_status = *value_data;
-
             runtime_config.kb_current_operation_mode = *value_data;
 
             break;
@@ -49,6 +48,12 @@ void via_custom_config_via_to_kb(uint8_t *data) {
             break;
 
         case id_experimental_features_status:
+
+            runtime_config.experimental_features_status = *value_data;
+
+            break;
+
+        case id_socd_status:
 
             break;
 
@@ -81,8 +86,6 @@ void via_custom_config_via_from_kb(uint8_t *data) {
 
             *value_data = runtime_config.kb_current_operation_mode;
 
-            //*value_data = runtime_config.calibration_status;
-
             break;
 
         case id_actuation_level:
@@ -92,14 +95,20 @@ void via_custom_config_via_from_kb(uint8_t *data) {
 
             break;
 
-        case id_experimental_features_status:
-
-            break;
-
         case id_release_level:
 
             value_data[0] = runtime_config.release_level_global >> 8;
             value_data[1] = runtime_config.release_level_global & 0xFF;
+
+            break;
+
+        case id_experimental_features_status:
+
+            *value_data = runtime_config.experimental_features_status;
+
+            break;
+
+        case id_socd_status:
 
             break;
         

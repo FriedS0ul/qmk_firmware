@@ -131,6 +131,33 @@
                             ]
                         }
                     ]
+                },
+                {
+                    "showIf": "{id_experimental_features_status} != 0",
+                    "label": "Experimental",
+                    "content": [
+                        {
+                            "label": "SOCD Mapping",
+                            "type": "toggle",
+                            "content": [
+                                "id_socd_status",
+                                0,
+                                7
+                            ]
+                        },
+                        {
+                            "label": "Save",
+                            "type": "button",
+                            "options": [
+                                1
+                            ],
+                            "content": [
+                                "id_save_to_eeprom",
+                                0,
+                                1
+                            ]
+                        }
+                    ]
                 }
             ]
         }

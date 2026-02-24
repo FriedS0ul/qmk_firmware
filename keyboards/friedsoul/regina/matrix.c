@@ -57,13 +57,13 @@ void logger(void) {
 
                 case 3:
                     uprintf("\r\n");
-                    uprintf("eeprom_config size: %zu\n", sizeof(eeprom_config));
+                    uprintf("EEPROM CURRENT SIZE: %zu byte \n", sizeof(eeprom_config));
                     uprintf("\r\n");
-                    uprintf("fw_level_number %d\n", eeprom_config.fw_level_number);
-                    uprintf("kb_current_operation_mode %d\n", runtime_config.kb_current_operation_mode);
-                    uprintf("console_log_status %d\n", runtime_config.console_log_status);
-                    uprintf("actuation_level_global %d\n", runtime_config.actuation_level_global);
-                    uprintf("release_level_global %d\n", runtime_config.release_level_global);
+                    uprintf("FIRMWARE LEVEL %d\n", eeprom_config.fw_level_number);
+                    uprintf("CURRENT OPERATION MODE %d\n", runtime_config.kb_current_operation_mode);
+                    uprintf("LOG STATUS %d\n", runtime_config.console_log_status);
+                    uprintf("ACTUATION GLOBAL %d\n", runtime_config.actuation_level_global);
+                    uprintf("RELEASE GLOBAL %d\n", runtime_config.release_level_global);
                     uprintf("\r\n");
                     break;
 
@@ -140,7 +140,6 @@ void ec_floor_sample(void) {
 bool ec_matrix_scan(matrix_row_t current_matrix[]) {
     bool     has_changed = false;
     uint16_t raw_adc_readings;
-    uint8_t  key_current_state;
 
     for (uint8_t col = 0; col < MATRIX_COLS; col++) {
         for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
@@ -148,8 +147,8 @@ bool ec_matrix_scan(matrix_row_t current_matrix[]) {
                 case 0: // Нормальная работа
 
                     raw_adc_readings  = ec_sw_scan(col, row);             // Получаем данные сканирования конкретного датчика
-                    key_current_state = (current_matrix[row] >> col) & 1; // Запрашиваем текущее состояние клавиши (нажата или отпущена)
-
+                    uint8_t key_current_state = (current_matrix[row] >> col) & 1; // Запрашиваем текущее состояние клавиши (нажата или отпущена)
+                    
                     if (raw_adc_readings <= runtime_config.floor_level_per_key[col][row]) { // Отбрасывает, если меньше уровня шума
                         continue;
                     } else if (raw_adc_readings > runtime_config.actuation_level_per_key[col][row] && key_current_state == 0) {
@@ -163,13 +162,14 @@ bool ec_matrix_scan(matrix_row_t current_matrix[]) {
                     break;
 
                 case 1: // Калибровка порогов
-
+                    
+                    uint8_t key_calibration_status = (runtime_config.calibration_status_per_key_bits[row] >> col) & 1; // Запрашиваем флаг калибровки конкретной клавиши
                     raw_adc_readings = ec_sw_scan(col, row); // Получаем данные сканирования конкретного датчика
 
-                    if (!runtime_config.calibration_status_per_key[col][row]) {
+                    if (key_calibration_status == 0){
                         runtime_config.ceiling_level_per_key[col][row]      = 0;
                         runtime_config.ceiling_level_per_key[col][row]      = raw_adc_readings;
-                        runtime_config.calibration_status_per_key[col][row] = false;
+                        runtime_config.calibration_status_per_key_bits[row] |= (1 << col);
                     }
 
                     if (runtime_config.ceiling_level_per_key[col][row] < raw_adc_readings) {
