@@ -11,8 +11,11 @@ enum via_extras_value_ids {
     id_calibration_status = 3,
     id_actuation_level = 4,
     id_release_level = 5,
-    id_experimental_features_status = 6,
-    id_socd_status = 7
+    id_experimental_features = 6,
+    id_socd_status = 7,
+    id_show_eeprom_reset = 8,
+    id_reset_eeprom = 9
+
 
 };
 
@@ -47,15 +50,27 @@ void via_custom_config_via_to_kb(uint8_t *data) {
 
             break;
 
-        case id_experimental_features_status:
+        case id_experimental_features:
 
-            runtime_config.experimental_features_status = *value_data;
+            //runtime_config.experimental_features_status = *value_data;
 
             break;
 
         case id_socd_status:
 
             runtime_config.kb_current_operation_mode = *value_data;
+
+            break;
+        
+        case id_show_eeprom_reset:
+
+            break;
+
+        case id_reset_eeprom:
+
+            eeprom_reset();
+
+            runtime_refresh();
 
             break;
 
@@ -104,9 +119,9 @@ void via_custom_config_via_from_kb(uint8_t *data) {
 
             break;
 
-        case id_experimental_features_status:
+        case id_experimental_features:
 
-            *value_data = runtime_config.experimental_features_status;
+            //*value_data = runtime_config.experimental_features_status;
 
             break;
 
@@ -115,7 +130,10 @@ void via_custom_config_via_from_kb(uint8_t *data) {
             *value_data = runtime_config.kb_current_operation_mode;
 
             break;
-        
+
+        case id_show_eeprom_reset:
+
+            break;
 
         default:
             // Ничего
@@ -147,7 +165,7 @@ void via_custom_value_command_kb(uint8_t *data, uint8_t lenght) {
             case id_custom_save:
 
                 break;
-
+                
             default:
                 // Ошибка по command_id
                 *command_id = 77;

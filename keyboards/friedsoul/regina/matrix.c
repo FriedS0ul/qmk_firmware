@@ -28,7 +28,7 @@ void pins_init(void) {
     }
 }
 
-// Вывод лога кажные N полных сканирований матрицы в консоль 
+// Вывод лога кажные N полных сканирований матрицы в консоль
 void logger(void) {
     if (runtime_config.console_log_status != 0) {
         if (scan_counter < DEFAULT_CONSOLE_LOG_FREQUENCY) {
@@ -138,37 +138,40 @@ void ec_floor_sample(void) {
 
 // Функция сканирования и обновления current matrix
 bool ec_matrix_scan(matrix_row_t current_matrix[]) {
-    bool     has_changed = false;
-    uint16_t raw_adc_readings;
+    bool has_changed = false;
 
     for (uint8_t col = 0; col < MATRIX_COLS; col++) {
         for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
             switch (runtime_config.kb_current_operation_mode) {
-                case 0: // Нормальная работа
+                // Нормальная работа
+                case 0: {
+                    uint16_t raw_adc_readings  = ec_sw_scan(col, row);             // Получаем данные сканирования конкретного датчика
+                    uint8_t  key_current_state = (current_matrix[row] >> col) & 1; // Запрашиваем текущее состояние клавиши (нажата или отпущена)
 
-                    raw_adc_readings  = ec_sw_scan(col, row);             // Получаем данные сканирования конкретного датчика
-                    uint8_t key_current_state = (current_matrix[row] >> col) & 1; // Запрашиваем текущее состояние клавиши (нажата или отпущена)
-                    
-                    if (raw_adc_readings <= runtime_config.floor_level_per_key[col][row]) { // Отбрасывает, если меньше уровня шума
-                        continue;
-                    } else if (raw_adc_readings > runtime_config.actuation_level_per_key[col][row] && key_current_state == 0) {
+                    if (raw_adc_readings <= runtime_config.floor_level_per_key[col][row]) {
+                        break;
+                    }
+
+                    if (raw_adc_readings > runtime_config.actuation_level_per_key[col][row] && key_current_state == 0) {
                         current_matrix[row] |= (1 << col); // Нажимаем
                         has_changed = true;
-                    } else if (raw_adc_readings < runtime_config.release_level_per_key[col][row] && key_current_state == 1) {
+                    }
+
+                    if (raw_adc_readings < runtime_config.release_level_per_key[col][row] && key_current_state == 1) {
                         current_matrix[row] &= ~(1 << col); // Отпускаем
                         has_changed = true;
                     }
 
                     break;
+                }
+                // Калибровка порогов
+                case 1: {
+                    uint8_t  key_calibration_status = (runtime_config.calibration_status_per_key_bits[row] >> col) & 1; // Запрашиваем статус калибровки конкретной клавиши
+                    uint16_t raw_adc_readings       = ec_sw_scan(col, row);                                             // Получаем данные сканирования конкретного датчика
 
-                case 1: // Калибровка порогов
-                    
-                    uint8_t key_calibration_status = (runtime_config.calibration_status_per_key_bits[row] >> col) & 1; // Запрашиваем статус калибровки конкретной клавиши
-                    raw_adc_readings = ec_sw_scan(col, row); // Получаем данные сканирования конкретного датчика
-
-                    if (key_calibration_status == 0){
-                        runtime_config.ceiling_level_per_key[col][row]      = 0;
-                        runtime_config.ceiling_level_per_key[col][row]      = raw_adc_readings;
+                    if (key_calibration_status == 0) {
+                        runtime_config.ceiling_level_per_key[col][row] = 0;
+                        runtime_config.ceiling_level_per_key[col][row] = raw_adc_readings;
                         runtime_config.calibration_status_per_key_bits[row] |= (1 << col);
                     }
 
@@ -177,20 +180,20 @@ bool ec_matrix_scan(matrix_row_t current_matrix[]) {
                     }
 
                     break;
+                }
+                // Запись SOCD
+                case 2: {
+                    // uint8_t key_socd_status = (runtime_config.socd_status_per_key_bits[row] >> col) & 1; // Запрашиваем статус SOCD конкретной клавиши
 
-                case 2: // Запись SOCD
-
-                    uint8_t key_socd_status = (runtime_config.socd_status_per_key_bits[row] >> col) & 1; // Запрашиваем статус SOCD конкретной клавиши
-                    
                     break;
-
+                }
+                // Ошибка
                 default:
-                    // Ошибка
+
                     break;
             }
         }
     }
-
     return has_changed;
 }
 

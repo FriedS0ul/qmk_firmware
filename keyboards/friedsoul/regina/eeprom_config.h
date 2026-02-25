@@ -15,7 +15,7 @@ uint16_t - 2 байта
 // Структура для записи/чтения данных из eeprom
 typedef struct {
     uint8_t fw_level_number; // Версия прошивки
-    uint8_t console_log_status; // Статус лога в консоль
+    uint8_t console_log_status; // 
     uint16_t ceiling_level_per_key[MATRIX_COLS][MATRIX_ROWS]; // Максимальное значение клавиши (Полностью нажата)
     uint16_t actuation_level_global; // Точка активации глобальная 0 - 1023
     uint16_t release_level_global; // Точка деактивации глобальная 0 - 1023
@@ -37,9 +37,7 @@ extern eeprom_config_t eeprom_config;
 
 // Структура для runtime данных, обновляется при сохранении в eeprom
 typedef struct {
-    bool is_valid;
     bool calibration_status; // Включена ли глобальная калибровка порогов // true - калибровка активна, false - калибровка неактивна
-    bool experimental_features_status; // Экспериментальные функции // true - активны, false - неактивны
     uint8_t kb_current_operation_mode; // 0 - Обычная работа, 1 - Калибровка порогов, 2 - Запись для SOCD
     uint8_t console_log_status; // Статус лога в консоль // 0 - Выключено,  1 - Данные порогов матрицы, 2 - Данные сканирования, 3 - размер eeprom_config в байтах и данные runtime_config
     uint16_t actuation_level_global; // Точка активации глобальная 0 - 1023
@@ -66,4 +64,6 @@ typedef struct {
 
 extern runtime_config_t runtime_config;
 
+void runtime_refresh(void);
+void eeprom_reset(void);
 void save_to_eeprom(void);

@@ -14,7 +14,7 @@
                     "label": "Misc",
                     "content": [
                         {
-                            "label": "Console state",
+                            "label": "Console mode",
                             "type": "dropdown",
                             "options": [
                                 [
@@ -41,24 +41,31 @@
                             ]
                         },
                         {
-                            "label": "Save",
-                            "type": "button",
-                            "options": [
-                                1
-                            ],
-                            "content": [
-                                "id_save_to_eeprom",
-                                0,
-                                1
-                            ]
-                        },
-                        {
                             "label": "Show experimental features",
                             "type": "toggle",
                             "content": [
                                 "id_experimental_features_status",
                                 0,
                                 6
+                            ]
+                        },
+                        {
+                            "label": "Show reset button",
+                            "type": "toggle",
+                            "content": [
+                                "id_show_eeprom_reset",
+                                0,
+                                8
+                            ]
+                        },
+                        {
+                            "showIf": "{id_show_eeprom_reset} != 0",
+                            "label": "FULL RESET | Resets all the setting to default values",
+                            "type": "button",
+                            "content": [
+                                "id_reset_eeprom",
+                                0,
+                                9
                             ]
                         }
                     ]
@@ -67,7 +74,7 @@
                     "label": "Calibration",
                     "content": [
                         {
-                            "label": "Calibration status",
+                            "label": "Calibration mode | On / Off",
                             "type": "toggle",
                             "content": [
                                 "id_calibration_status",
@@ -76,7 +83,7 @@
                             ]
                         },
                         {
-                            "label": "Save",
+                            "label": "Save | This button saves all the changes you've made to a persistent memory",
                             "type": "button",
                             "options": [
                                 1
@@ -119,7 +126,7 @@
                             ]
                         },
                         {
-                            "label": "Save",
+                            "label": "Save | This button saves all the changes you've made to a persistent memory",
                             "type": "button",
                             "options": [
                                 1
@@ -137,7 +144,7 @@
                     "label": "Experimental",
                     "content": [
                         {
-                            "label": "SOCD Mapping",
+                            "label": "SOCD mapping mode | On / Off",
                             "type": "toggle",
                             "options": [
                                 0,
@@ -150,7 +157,7 @@
                             ]
                         },
                         {
-                            "label": "Save",
+                            "label": "Save | This button saves all the changes you've made to a persistent memory",
                             "type": "button",
                             "options": [
                                 1
