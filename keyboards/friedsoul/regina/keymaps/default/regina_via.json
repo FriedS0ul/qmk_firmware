@@ -8,7 +8,7 @@
     },
     "menus": [
         {
-            "label": "CUSTOM",
+            "label": "EC TOOLS",
             "content": [
                 {
                     "label": "Misc",
@@ -41,10 +41,10 @@
                             ]
                         },
                         {
-                            "label": "Show experimental features",
+                            "label": "Show advanced features",
                             "type": "toggle",
                             "content": [
-                                "id_experimental_features_status",
+                                "id_show_advanced_features",
                                 0,
                                 6
                             ]
@@ -53,19 +53,19 @@
                             "label": "Show reset button",
                             "type": "toggle",
                             "content": [
-                                "id_show_eeprom_reset",
+                                "id_show_kb_reset",
                                 0,
-                                8
+                                9
                             ]
                         },
                         {
-                            "showIf": "{id_show_eeprom_reset} != 0",
+                            "showIf": "{id_show_kb_reset} != 0",
                             "label": "FULL RESET | Resets all the setting to default values",
                             "type": "button",
                             "content": [
-                                "id_reset_eeprom",
+                                "id_kb_reset",
                                 0,
-                                9
+                                10
                             ]
                         }
                     ]
@@ -97,7 +97,7 @@
                     ]
                 },
                 {
-                    "label": "Travel setup",
+                    "label": "Actuation setup",
                     "content": [
                         {
                             "label": "Actuation level (Always > Release level)",
@@ -140,8 +140,8 @@
                     ]
                 },
                 {
-                    "showIf": "{id_experimental_features_status} != 0",
-                    "label": "Experimental",
+                    "showIf": "{id_show_advanced_features} != 0",
+                    "label": "Advanced features",
                     "content": [
                         {
                             "label": "SOCD mapping mode | On / Off",
@@ -154,6 +154,15 @@
                                 "id_socd_status",
                                 0,
                                 7
+                            ]
+                        },
+                        {
+                            "label": "SOCD reset | Resets your SOCD setting",
+                            "type": "button",
+                            "content": [
+                                "id_socd_reset",
+                                0,
+                                10
                             ]
                         },
                         {

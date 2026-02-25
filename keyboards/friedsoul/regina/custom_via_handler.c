@@ -6,16 +6,16 @@
 // Переменные - ID для дополнительных элементов меню в VIA
 enum via_extras_value_ids {
 
-    id_save_to_eeprom = 1,
-    id_console_log_status = 2,
-    id_calibration_status = 3,
-    id_actuation_level = 4,
-    id_release_level = 5,
-    id_experimental_features = 6,
-    id_socd_status = 7,
-    id_show_eeprom_reset = 8,
-    id_reset_eeprom = 9
-
+    id_save_to_eeprom         = 1,
+    id_console_log_status     = 2,
+    id_calibration_status     = 3,
+    id_actuation_level        = 4,
+    id_release_level          = 5,
+    id_show_advanced_features = 6,
+    id_socd_status            = 7,
+    id_socd_reset             = 8,
+    id_show_kb_reset          = 9,
+    id_kb_reset               = 10
 
 };
 
@@ -50,9 +50,7 @@ void via_custom_config_via_to_kb(uint8_t *data) {
 
             break;
 
-        case id_experimental_features:
-
-            //runtime_config.experimental_features_status = *value_data;
+        case id_show_advanced_features:
 
             break;
 
@@ -61,22 +59,35 @@ void via_custom_config_via_to_kb(uint8_t *data) {
             runtime_config.kb_current_operation_mode = *value_data;
 
             break;
-        
-        case id_show_eeprom_reset:
+
+        case id_socd_reset:
+
+            runtime_config.socd_status = 0;
+            for (uint8_t col = 0; col < MATRIX_COLS; col++) {
+                for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
+                    runtime_config.socd_status_per_key_bits[row] &= ~(1 << col);
+                }
+            }
 
             break;
 
-        case id_reset_eeprom:
+        case id_show_kb_reset:
+
+            break;
+
+        case id_kb_reset:
 
             eeprom_reset();
 
-            runtime_refresh();
+            runtime_renew();
 
             break;
 
         case id_save_to_eeprom:
 
             save_to_eeprom();
+
+            runtime_renew();
 
             break;
 
@@ -119,9 +130,7 @@ void via_custom_config_via_from_kb(uint8_t *data) {
 
             break;
 
-        case id_experimental_features:
-
-            //*value_data = runtime_config.experimental_features_status;
+        case id_show_advanced_features:
 
             break;
 
@@ -131,7 +140,7 @@ void via_custom_config_via_from_kb(uint8_t *data) {
 
             break;
 
-        case id_show_eeprom_reset:
+        case id_show_kb_reset:
 
             break;
 
@@ -146,7 +155,7 @@ void via_custom_value_command_kb(uint8_t *data, uint8_t lenght) {
     // data = [ command_id, channel_id, value_id, value_data ]
     uint8_t *command_id        = &(data[0]);
     uint8_t *channel_id        = &(data[1]);
-    uint8_t *value_id_and_data = &(data[2]); 
+    uint8_t *value_id_and_data = &(data[2]);
 
     if (*channel_id == id_custom_channel) {
         switch (*command_id) {
@@ -165,7 +174,7 @@ void via_custom_value_command_kb(uint8_t *data, uint8_t lenght) {
             case id_custom_save:
 
                 break;
-                
+
             default:
                 // Ошибка по command_id
                 *command_id = 77;

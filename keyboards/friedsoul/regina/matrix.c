@@ -64,6 +64,7 @@ void logger(void) {
                     uprintf("LOG STATUS %d\n", runtime_config.console_log_status);
                     uprintf("ACTUATION GLOBAL %d\n", runtime_config.actuation_level_global);
                     uprintf("RELEASE GLOBAL %d\n", runtime_config.release_level_global);
+                    uprintf("SOCD KEY COUNT %d\n", runtime_config.socd_status);
                     uprintf("\r\n");
                     break;
 
@@ -181,8 +182,26 @@ bool ec_matrix_scan(matrix_row_t current_matrix[]) {
 
                     break;
                 }
-                // Запись SOCD
-                case 2: {
+                // Запись SOCD НАДО ПРОВЕРИТЬ, ПРИ УСЛОВИИ 2 КНОПОК ВЫГОДНЕЕ ХРАНИТЬ ТУПО КАК ДВА МАССИВА (4 байта)
+                case 2: { 
+                    // Проверка количества клавиш с активным SOCD
+                    if (runtime_config.socd_status <= SOCD_MAX_KEY_QTY) {
+                        uint16_t raw_adc_readings = ec_sw_scan(col, row); // Получаем данные сканирования конкретного датчика
+                        if (raw_adc_readings > runtime_config.actuation_level_per_key[col][row]) {
+                            runtime_config.socd_status_per_key_bits[row] |= (1 << col); // Регистрируем клавишу как SOCD
+                            runtime_config.socd_status++;
+                            break;
+                        }
+                    }
+
+                    // Если количество активных > 2, то сброс настроек SOCD
+                    runtime_config.socd_status = 0;
+                    for (uint8_t col = 0; col < MATRIX_COLS; col++) {
+                        for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
+                            runtime_config.socd_status_per_key_bits[row] &= ~(1 << col);
+                        }
+                    }
+
                     // uint8_t key_socd_status = (runtime_config.socd_status_per_key_bits[row] >> col) & 1; // Запрашиваем статус SOCD конкретной клавиши
 
                     break;
