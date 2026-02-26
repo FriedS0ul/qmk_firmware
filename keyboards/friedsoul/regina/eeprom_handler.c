@@ -14,7 +14,6 @@ void save_to_eeprom(void) {
     for (uint8_t col = 0; col < MATRIX_COLS; col++) {
         for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
             eeprom_config.ceiling_level_per_key[col][row] = runtime_config.ceiling_level_per_key[col][row];
-            eeprom_config.socd_status_per_key_bits[row]   = runtime_config.socd_status_per_key_bits[row];
         }
     }
     eeconfig_update_kb_datablock(&eeprom_config, 0, sizeof(eeprom_config));
@@ -23,14 +22,12 @@ void save_to_eeprom(void) {
 // Обновление runtime_config значениями из EEPROM(eeprom_config)
 void runtime_renew(void) {
     runtime_config.kb_current_operation_mode = 0;
-    runtime_config.socd_status               = eeprom_config.socd_status;
     runtime_config.console_log_status        = eeprom_config.console_log_status;
     runtime_config.actuation_level_global    = eeprom_config.actuation_level_global;
     runtime_config.release_level_global      = eeprom_config.release_level_global;
     for (uint8_t col = 0; col < MATRIX_COLS; col++) {
         for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
             runtime_config.calibration_status_per_key_bits[row] = 0;
-            runtime_config.socd_status_per_key_bits[row]        = eeprom_config.socd_status_per_key_bits[row];
             runtime_config.ceiling_level_per_key[col][row]      = eeprom_config.ceiling_level_per_key[col][row];
             runtime_config.actuation_level_per_key[col][row]    = interpolate(runtime_config.floor_level_per_key[col][row], runtime_config.ceiling_level_per_key[col][row], runtime_config.actuation_level_global, 0, 1023);
             runtime_config.release_level_per_key[col][row]      = interpolate(runtime_config.floor_level_per_key[col][row], runtime_config.ceiling_level_per_key[col][row], runtime_config.release_level_global, 0, 1023);
@@ -40,7 +37,6 @@ void runtime_renew(void) {
 
 // Перезапись EEPROM дефолтными значениями
 void eeprom_reset(void) {
-    eeprom_config.socd_status            = 0;
     eeprom_config.console_log_status     = DEFAULT_CONSOLE_LOG_STATUS;
     eeprom_config.fw_level_number        = FIRMWARE_LEVEL_NUMBER;
     eeprom_config.actuation_level_global = DEFAULT_ACTUATION_LEVEL;
@@ -48,9 +44,9 @@ void eeprom_reset(void) {
     for (uint8_t col = 0; col < MATRIX_COLS; col++) {
         for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
             eeprom_config.ceiling_level_per_key[col][row] = DEFAULT_CEILING_LEVEL;
-            eeprom_config.socd_status_per_key_bits[row]   = 0;
         }
     }
+
     eeconfig_update_kb_datablock(&eeprom_config, 0, sizeof(eeprom_config));
 }
 

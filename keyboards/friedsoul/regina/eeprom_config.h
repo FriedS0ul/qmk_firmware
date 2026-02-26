@@ -11,7 +11,6 @@ unt8_t - 1 байт
 uint16_t - 2 байта
 */
 
-
 // Структура для записи/чтения данных из eeprom
 typedef struct {
     uint8_t fw_level_number; // Версия прошивки
@@ -19,18 +18,10 @@ typedef struct {
     uint16_t ceiling_level_per_key[MATRIX_COLS][MATRIX_ROWS]; // Максимальное значение клавиши (Полностью нажата)
     uint16_t actuation_level_global; // Точка активации глобальная 0 - 1023
     uint16_t release_level_global; // Точка деактивации глобальная 0 - 1023
-    uint8_t socd_status; // 0 - Выкл + используется для регистрации количества кнопок SOCD
 
-    // Битовая матрица статуса SOCD 
-    #if(MATRIX_COLS <= 8)
-    uint8_t socd_status_per_key_bits[MATRIX_ROWS]; 
-    #elif(MATRIX_COLS <=16)
-    uint16_t socd_status_per_key_bits[MATRIX_ROWS];
-    #elif(MATRIX_COLS <=32)
-    uint32_t socd_status_per_key_bits[MATRIX_ROWS];
-    #else
-    #error "Проверь MATRIX_COLS"
-    #endif
+    uint8_t socd_keys_address[2][3]; // Два адреса - {col, row, флаг установки}
+
+    
 
 } eeprom_config_t;
 
@@ -47,18 +38,16 @@ typedef struct {
     uint16_t floor_level_per_key[MATRIX_COLS][MATRIX_ROWS]; // Минимальное значение клавиши (В покое)
     uint16_t actuation_level_per_key[MATRIX_COLS][MATRIX_ROWS]; // Точка активации
     uint16_t release_level_per_key[MATRIX_COLS][MATRIX_ROWS]; // Точка деактивации
-    uint8_t socd_status; // 0 - Выкл + используется для регистрации количества кнопок SOCD
+
+    uint8_t socd_keys_address[2][3]; // Два адреса - {col, row, флаг установки}
 
     // Битовые матрицы статуса калибровки и SOCD
     #if(MATRIX_COLS <= 8)
     uint8_t calibration_status_per_key_bits[MATRIX_ROWS];
-    uint8_t socd_status_per_key_bits[MATRIX_ROWS];
     #elif(MATRIX_COLS <=16)
     uint16_t calibration_status_per_key_bits[MATRIX_ROWS];
-    uint16_t socd_status_per_key_bits[MATRIX_ROWS];
     #elif(MATRIX_COLS <=32)
     uint32_t calibration_status_per_key_bits[MATRIX_ROWS];
-    uint32_t socd_status_per_key_bits[MATRIX_ROWS];
     #else
     #error "Проверь MATRIX_COLS"
     #endif

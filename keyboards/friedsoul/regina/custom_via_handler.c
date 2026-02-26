@@ -61,14 +61,7 @@ void via_custom_config_via_to_kb(uint8_t *data) {
             break;
 
         case id_socd_reset:
-
-            runtime_config.socd_status = 0;
-            for (uint8_t col = 0; col < MATRIX_COLS; col++) {
-                for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
-                    runtime_config.socd_status_per_key_bits[row] &= ~(1 << col);
-                }
-            }
-
+            
             break;
 
         case id_show_kb_reset:
