@@ -186,25 +186,14 @@ bool ec_matrix_scan(matrix_row_t current_matrix[]) {
 
                 // Запись SOCD
                 case 2: {
+
                     if (raw_adc_readings < runtime_config.actuation_level_per_key[col][row]) {
                         break;
-                    }
-
-                    if (eeprom_config.socd_keys_address[0][2] != 1) {
-                        eeprom_config.socd_keys_address[0][0] = col;
-                        eeprom_config.socd_keys_address[0][1] = row;
-                        eeprom_config.socd_keys_address[0][2] = 1;
-
-                    } else if (eeprom_config.socd_keys_address[1][2] != 1) {
-                        eeprom_config.socd_keys_address[1][0] = col;
-                        eeprom_config.socd_keys_address[1][1] = row;
-                        eeprom_config.socd_keys_address[1][2] = 1;
                     }
 
                     break;
                 }
 
-                // Ошибка
                 default:
 
                     break;
