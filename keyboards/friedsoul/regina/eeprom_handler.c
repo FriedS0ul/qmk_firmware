@@ -42,13 +42,15 @@ void eeprom_reset(void) {
     eeprom_config.actuation_level_global = DEFAULT_ACTUATION_LEVEL;
     eeprom_config.release_level_global   = DEFAULT_RELEASE_LEVEL;
 
+    for (uint8_t i = 0; i < 2; i++){
+        eeprom_config.socd_keys.cols[i] = 0;
+        eeprom_config.socd_keys.rows[i] = 0;
+    }
+    
+
     for (uint8_t col = 0; col < MATRIX_COLS; col++) {
         for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
-            eeprom_config.ceiling_level_per_key[col][row] = DEFAULT_CEILING_LEVEL;
-            if (col < 2 && row < 2){
-                eeprom_config.socd_keys_addresses[col][row] = 0;
-            }
-            
+            eeprom_config.ceiling_level_per_key[col][row] = DEFAULT_CEILING_LEVEL;         
         }
     }
 

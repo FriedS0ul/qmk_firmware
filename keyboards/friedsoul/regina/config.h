@@ -5,7 +5,7 @@
 #define MATRIX_COLS 1 // Количество колонок матрицы
 #define MATRIX_ROWS 5 // Количество рядов матрицы
 
-#define DEFAULT_SOCD_KEYS_ADRESSES {{0, 0}, {0, 0}}
+#define DEFAULT_SOCD_KEYS_ADRESSES {0, 0}
 
 // ПИНЫ
 #define MATRIX_ROW_PINS {A10, A8, A3, A2, A1} // Пины рядов матрицы
