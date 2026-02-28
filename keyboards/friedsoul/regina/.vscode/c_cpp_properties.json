@@ -23,6 +23,18 @@
                 "_DEBUG",
                 "UNICODE",
                 "_UNICODE"
+            ],
+            "compilerPath": "D:\\QMK_MSYS\\mingw64\\bin\\gcc.exe"
+        },
+        {
+            "name": "std",
+            "includePath": [
+                "${workspaceFolder}/**"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
             ]
         }
     ],

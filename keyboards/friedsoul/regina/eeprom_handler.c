@@ -9,8 +9,10 @@ uint16_t interpolate(uint16_t Y_start, uint16_t Y_finish, uint16_t X, uint16_t X
 
 // Обновление EEPROM(и eeprom_config) значениями из runtime_config
 void save_to_eeprom(void) {
-    eeprom_config.actuation_level_global = runtime_config.actuation_level_global;
-    eeprom_config.release_level_global   = runtime_config.release_level_global;
+    eeprom_config.console_log_status            = runtime_config.console_log_status;
+    eeprom_config.actuation_level_global        = runtime_config.actuation_level_global;
+    eeprom_config.release_level_global          = runtime_config.release_level_global;
+    eeprom_config.advanced_features_status_bits = runtime_config.advanced_features_status_bits;
     for (uint8_t col = 0; col < MATRIX_COLS; col++) {
         for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
             eeprom_config.ceiling_level_per_key[col][row] = runtime_config.ceiling_level_per_key[col][row];
@@ -21,10 +23,11 @@ void save_to_eeprom(void) {
 
 // Обновление runtime_config значениями из EEPROM(eeprom_config)
 void runtime_renew(void) {
-    runtime_config.kb_current_operation_mode = 0;
-    runtime_config.console_log_status        = eeprom_config.console_log_status;
-    runtime_config.actuation_level_global    = eeprom_config.actuation_level_global;
-    runtime_config.release_level_global      = eeprom_config.release_level_global;
+    runtime_config.kb_current_operation_mode     = 0;
+    runtime_config.console_log_status            = eeprom_config.console_log_status;
+    runtime_config.actuation_level_global        = eeprom_config.actuation_level_global;
+    runtime_config.release_level_global          = eeprom_config.release_level_global;
+    runtime_config.advanced_features_status_bits = eeprom_config.advanced_features_status_bits;
     for (uint8_t col = 0; col < MATRIX_COLS; col++) {
         for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
             runtime_config.calibration_status_per_key_bits[row] = 0;
@@ -37,20 +40,15 @@ void runtime_renew(void) {
 
 // Перезапись EEPROM дефолтными значениями
 void eeprom_reset(void) {
-    eeprom_config.console_log_status     = DEFAULT_CONSOLE_LOG_STATUS;
-    eeprom_config.fw_level_number        = FIRMWARE_LEVEL_NUMBER;
-    eeprom_config.actuation_level_global = DEFAULT_ACTUATION_LEVEL;
-    eeprom_config.release_level_global   = DEFAULT_RELEASE_LEVEL;
-
-    for (uint8_t i = 0; i < 2; i++){
-        eeprom_config.socd_keys.cols[i] = 0;
-        eeprom_config.socd_keys.rows[i] = 0;
-    }
-    
+    eeprom_config.console_log_status            = DEFAULT_CONSOLE_LOG_STATUS;
+    eeprom_config.fw_level_number               = FIRMWARE_LEVEL_NUMBER;
+    eeprom_config.actuation_level_global        = DEFAULT_ACTUATION_LEVEL;
+    eeprom_config.release_level_global          = DEFAULT_RELEASE_LEVEL;
+    eeprom_config.advanced_features_status_bits = 0;
 
     for (uint8_t col = 0; col < MATRIX_COLS; col++) {
         for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
-            eeprom_config.ceiling_level_per_key[col][row] = DEFAULT_CEILING_LEVEL;         
+            eeprom_config.ceiling_level_per_key[col][row] = DEFAULT_CEILING_LEVEL;
         }
     }
 

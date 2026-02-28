@@ -64,7 +64,6 @@ void logger(void) {
                     uprintf("LOG STATUS %d\n", runtime_config.console_log_status);
                     uprintf("ACTUATION GLOBAL %d\n", runtime_config.actuation_level_global);
                     uprintf("RELEASE GLOBAL %d\n", runtime_config.release_level_global);
-                    uprintf("SOCD KEY COUNT %d\n", runtime_config.socd_status);
                     uprintf("\r\n");
                     break;
 
@@ -147,18 +146,18 @@ bool ec_matrix_scan(matrix_row_t current_matrix[]) {
                 // Нормальная работа
                 case 0: {
                     uint16_t raw_adc_readings  = ec_sw_scan(col, row);             // Получаем данные сканирования конкретного датчика
-                    uint8_t  key_current_state = (current_matrix[row] >> col) & 1; // Запрашиваем текущее состояние клавиши (нажата или отпущена)
+                    uint8_t  key_previous_state = (current_matrix[row] >> col) & 1; // Запрашиваем текущее состояние клавиши (нажата или отпущена)
 
                     if (raw_adc_readings <= runtime_config.floor_level_per_key[col][row]) {
                         break;
                     }
 
-                    if (raw_adc_readings > runtime_config.actuation_level_per_key[col][row] && key_current_state == 0) {
+                    if (raw_adc_readings > runtime_config.actuation_level_per_key[col][row] && key_previous_state == 0) {
                         current_matrix[row] |= (1 << col); // Нажимаем
                         has_changed = true;
                     }
 
-                    if (raw_adc_readings < runtime_config.release_level_per_key[col][row] && key_current_state == 1) {
+                    if (raw_adc_readings < runtime_config.release_level_per_key[col][row] && key_previous_state == 1) {
                         current_matrix[row] &= ~(1 << col); // Отпускаем
                         has_changed = true;
                     }
@@ -187,10 +186,6 @@ bool ec_matrix_scan(matrix_row_t current_matrix[]) {
                 // Запись SOCD
                 case 2: {
 
-                    if (raw_adc_readings < runtime_config.actuation_level_per_key[col][row]) {
-                        break;
-                    }
-
                     break;
                 }
 
@@ -202,6 +197,7 @@ bool ec_matrix_scan(matrix_row_t current_matrix[]) {
     }
     return has_changed;
 }
+
 
 // Инициализация матрицы СТАНДАРТНАЯ
 void matrix_init_custom(void) {

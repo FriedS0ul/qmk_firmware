@@ -3,19 +3,41 @@
 #include "config.h"
 #include "eeprom_config.h"
 
+enum advanced_features_bit_matrix {
+
+    bits_advanced_features_global = 7,
+    bits_socd_status_global       = 6,
+    bits_socd_pair_0_status       = 5,
+    bits_socd_pair_1_status       = 4,
+    bits_socd_pair_2_status       = 3,
+    bits_socd_pair_0_mapping      = 2,
+    bits_socd_pair_1_mapping      = 1,
+    bits_socd_pair_2_mapping      = 0
+
+};
+
 // Переменные - ID для дополнительных элементов меню в VIA
 enum via_extras_value_ids {
 
-    id_save_to_eeprom         = 1,
-    id_console_log_status     = 2,
-    id_calibration_status     = 3,
-    id_actuation_level        = 4,
-    id_release_level          = 5,
-    id_show_advanced_features = 6,
-    id_socd_status            = 7,
-    id_socd_reset             = 8,
-    id_show_kb_reset          = 9,
-    id_kb_reset               = 10
+    id_save_to_eeprom         = 1,  // button
+    id_console_log_status     = 2,  // dropdown
+    id_calibration_status     = 3,  // toggle
+    id_actuation_level        = 4,  // range
+    id_release_level          = 5,  // range
+    id_show_kb_reset          = 6,  // toggle
+    id_kb_reset               = 7,  // button
+    id_show_advanced_features = 8,  // toggle
+    id_socd_status_global     = 9,  // toggle
+    id_socd_pairs             = 10, // dropdown
+    id_socd_pair_0_status     = 11, // toggle
+    id_socd_pair_0_mapping    = 12, // button
+    id_socd_pair_0_mode       = 13, // dropdown
+    id_socd_pair_1_status     = 14, // toggle
+    id_socd_pair_1_mapping    = 15, // button
+    id_socd_pair_1_mode       = 16, // dropdown
+    id_socd_pair_2_status     = 17, // toggle
+    id_socd_pair_2_mapping    = 18, // button
+    id_socd_pair_2_mode       = 19, // dropdown
 
 };
 
@@ -52,16 +74,141 @@ void via_custom_config_via_to_kb(uint8_t *data) {
 
         case id_show_advanced_features:
 
+            switch (*value_data) {
+                case 1:
+
+                    runtime_config.advanced_features_status_bits |= (1 << bits_advanced_features_global);
+
+                    break;
+
+                case 0:
+
+                    runtime_config.advanced_features_status_bits &= ~(1 << bits_advanced_features_global);
+
+                    break;
+
+                default:
+                    break;
+            }
+
             break;
 
-        case id_socd_status:
+        case id_socd_status_global:
 
-            runtime_config.kb_current_operation_mode = *value_data;
+            switch (*value_data) {
+                case 1:
+
+                    runtime_config.advanced_features_status_bits |= (1 << bits_socd_status_global);
+
+                    break;
+
+                case 0:
+
+                    runtime_config.advanced_features_status_bits &= ~(1 << bits_socd_status_global);
+
+                    break;
+
+                default:
+                    break;
+            }
 
             break;
 
-        case id_socd_reset:
-            
+        case id_socd_pairs:
+
+            break;
+
+        case id_socd_pair_0_status:
+
+            switch (*value_data) {
+                case 1:
+
+                    runtime_config.advanced_features_status_bits |= (1 << bits_socd_pair_0_status);
+
+                    break;
+
+                case 0:
+
+                    runtime_config.advanced_features_status_bits &= ~(1 << bits_socd_pair_0_status);
+
+                    break;
+
+                default:
+                    break;
+            }
+
+            break;
+
+        case id_socd_pair_0_mapping:
+
+            runtime_config.advanced_features_status_bits |= (1 << bits_socd_pair_0_mapping);
+
+            break;
+
+        case id_socd_pair_0_mode:
+
+            break;
+
+        case id_socd_pair_1_status:
+
+            switch (*value_data) {
+                case 1:
+
+                    runtime_config.advanced_features_status_bits |= (1 << bits_socd_pair_1_status);
+
+                    break;
+
+                case 0:
+
+                    runtime_config.advanced_features_status_bits &= ~(1 << bits_socd_pair_1_status);
+
+                    break;
+
+                default:
+                    break;
+            }
+
+            break;
+
+        case id_socd_pair_1_mapping:
+
+            runtime_config.advanced_features_status_bits |= (1 << bits_socd_pair_1_mapping);
+
+            break;
+
+        case id_socd_pair_1_mode:
+
+            break;
+
+        case id_socd_pair_2_status:
+
+            switch (*value_data) {
+                case 1:
+
+                    runtime_config.advanced_features_status_bits |= (1 << bits_socd_pair_2_status);
+
+                    break;
+
+                case 0:
+
+                    runtime_config.advanced_features_status_bits &= ~(1 << bits_socd_pair_2_status);
+
+                    break;
+
+                default:
+                    break;
+            }
+
+            break;
+
+        case id_socd_pair_2_mapping:
+
+            runtime_config.advanced_features_status_bits |= (1 << bits_socd_pair_2_mapping);
+
+            break;
+
+        case id_socd_pair_2_mode:
+
             break;
 
         case id_show_kb_reset:
@@ -125,11 +272,47 @@ void via_custom_config_via_from_kb(uint8_t *data) {
 
         case id_show_advanced_features:
 
+            *value_data = (runtime_config.advanced_features_status_bits >> bits_advanced_features_global) & 1;
+
             break;
 
-        case id_socd_status:
+        case id_socd_status_global:
 
-            *value_data = runtime_config.kb_current_operation_mode;
+            *value_data = (runtime_config.advanced_features_status_bits >> bits_socd_status_global) & 1;
+
+            break;
+
+        case id_socd_pairs:
+
+            break;
+
+        case id_socd_pair_0_status:
+
+            *value_data = (runtime_config.advanced_features_status_bits >> bits_socd_pair_0_status) & 1;
+
+            break;
+
+        case id_socd_pair_0_mode:
+
+            break;
+
+        case id_socd_pair_1_status:
+
+            *value_data = (runtime_config.advanced_features_status_bits >> bits_socd_pair_1_status) & 1;
+
+            break;
+
+        case id_socd_pair_1_mode:
+
+            break;
+
+        case id_socd_pair_2_status:
+
+            *value_data = (runtime_config.advanced_features_status_bits >> bits_socd_pair_2_status) & 1;
+
+            break;
+
+        case id_socd_pair_2_mode:
 
             break;
 

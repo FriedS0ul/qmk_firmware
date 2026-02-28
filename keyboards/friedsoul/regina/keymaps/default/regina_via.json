@@ -46,7 +46,7 @@
                             "content": [
                                 "id_show_advanced_features",
                                 0,
-                                6
+                                8
                             ]
                         },
                         {
@@ -55,7 +55,7 @@
                             "content": [
                                 "id_show_kb_reset",
                                 0,
-                                9
+                                6
                             ]
                         },
                         {
@@ -65,7 +65,19 @@
                             "content": [
                                 "id_kb_reset",
                                 0,
-                                10
+                                7
+                            ]
+                        },
+                        {   "showIf":"{id_show_kb_reset} != 1",
+                            "label": "Save | This button saves all the changes you've made to a persistent memory",
+                            "type": "button",
+                            "options": [
+                                1
+                            ],
+                            "content": [
+                                "id_save_to_eeprom",
+                                0,
+                                1
                             ]
                         }
                     ]
@@ -144,25 +156,168 @@
                     "label": "Advanced features",
                     "content": [
                         {
-                            "label": "SOCD mapping mode | On / Off",
+                            "label": "SOCD | On / Off",
                             "type": "toggle",
-                            "options": [
-                                0,
-                                2
-                            ],
                             "content": [
-                                "id_socd_status",
+                                "id_socd_status_global",
                                 0,
-                                7
+                                9
                             ]
                         },
                         {
-                            "label": "SOCD reset | Resets your SOCD setting",
-                            "type": "button",
+                            "showIf": "{id_socd_status_global} != 0",
+                            "label": "SOCD Pairs",
+                            "type": "dropdown",
                             "content": [
-                                "id_socd_reset",
+                                "id_socd_pairs",
                                 0,
                                 10
+                            ],
+                            "options": [
+                                [
+                                    "Pair 0",
+                                    0
+                                ],
+                                [
+                                    "Pair 1",
+                                    1
+                                ],
+                                [
+                                    "Pair 2",
+                                    2
+                                ]
+                            ]
+                        },
+                        {
+                            "showIf": "{id_socd_pairs} == 0 && {id_socd_status_global} != 0",
+                            "label": "Pair 0 | On / Off",
+                            "type": "toggle",
+                            "content": [
+                                "id_socd_pair_0_status",
+                                0,
+                                11
+                            ]
+                        },
+                        {
+                            "showIf": "{id_socd_pair_0_status} != 0 && {id_socd_pairs} == 0 && {id_socd_status_global} != 0",
+                            "label": "Pair 0 mapping | Maps next 2 keys pressed as an SOCD pair",
+                            "type": "button",
+                            "content": [
+                                "id_socd_pair_0_mapping",
+                                0,
+                                12
+                            ]
+                        },
+                        {
+                            "showIf": "{id_socd_pair_0_status} != 0 && {id_socd_pairs} == 0 && {id_socd_status_global} != 0",
+                            "label": "Pair 0 mode",
+                            "type": "dropdown",
+                            "content": [
+                                "id_socd_pair_0_mode",
+                                0,
+                                13
+                            ],
+                            "options": [
+                                [
+                                    "Last wins",
+                                    0
+                                ],
+                                [
+                                    "Neutral",
+                                    1
+                                ],
+                                [
+                                    "First wins",
+                                    2
+                                ]
+                            ]
+                        },
+                        {
+                            "showIf": "{id_socd_pairs} == 1 && {id_socd_status_global} != 0",
+                            "label": "Pair 1 | On / Off",
+                            "type": "toggle",
+                            "content": [
+                                "id_socd_pair_1_status",
+                                0,
+                                14
+                            ]
+                        },
+                        {
+                            "showIf": "{id_socd_pair_1_status} != 0  && {id_socd_pairs} == 1 && {id_socd_status_global} != 0",
+                            "label": "Pair 1 mapping | Maps next 2 keys pressed as an SOCD pair",
+                            "type": "button",
+                            "content": [
+                                "id_socd_pair_1_mapping",
+                                0,
+                                15
+                            ]
+                        },
+                        {
+                            "showIf": "{id_socd_pair_1_status} != 0  && {id_socd_pairs} == 1 && {id_socd_status_global} != 0",
+                            "label": "Pair 1 mode",
+                            "type": "dropdown",
+                            "content": [
+                                "id_socd_pair_1_mode",
+                                0,
+                                16
+                            ],
+                            "options": [
+                                [
+                                    "Last wins",
+                                    0
+                                ],
+                                [
+                                    "Neutral",
+                                    1
+                                ],
+                                [
+                                    "First wins",
+                                    2
+                                ]
+                            ]
+                        },
+                        {
+                            "showIf": "{id_socd_pairs} == 2 && {id_socd_status_global} != 0",
+                            "label": "Pair 2 | On / Off",
+                            "type": "toggle",
+                            "content": [
+                                "id_socd_pair_2_status",
+                                0,
+                                17
+                            ]
+                        },
+                        {
+                            "showIf": "{id_socd_pair_2_status} != 0  && {id_socd_pairs} == 2 && {id_socd_status_global} != 0",
+                            "label": "Pair 2 mapping | Maps next 2 keys pressed as an SOCD pair",
+                            "type": "button",
+                            "content": [
+                                "id_socd_pair_2_mapping",
+                                0,
+                                18
+                            ]
+                        },
+                        {
+                            "showIf": "{id_socd_pair_2_status} != 0  && {id_socd_pairs} == 2 && {id_socd_status_global} != 0",
+                            "label": "Pair 2 mode",
+                            "type": "dropdown",
+                            "content": [
+                                "id_socd_pair_2_mode",
+                                0,
+                                19
+                            ],
+                            "options": [
+                                [
+                                    "Last wins",
+                                    0
+                                ],
+                                [
+                                    "Neutral",
+                                    1
+                                ],
+                                [
+                                    "First wins",
+                                    2
+                                ]
                             ]
                         },
                         {
