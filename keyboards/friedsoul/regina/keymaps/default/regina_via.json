@@ -32,6 +32,10 @@
                                 [
                                     "EEPROM size + runtime_config",
                                     3
+                                ],
+                                [
+                                    "SOCD Slots info",
+                                    4
                                 ]
                             ],
                             "content": [
@@ -202,8 +206,9 @@
                             "showIf": "{id_socd_pair_0_status} != 0 && {id_socd_pairs} == 0 && {id_socd_status_global} != 0",
                             "label": "Pair 0 mapping | Maps next 2 keys pressed as an SOCD pair",
                             "type": "button",
+                            "options":[2],
                             "content": [
-                                "id_socd_pair_0_mapping",
+                                "id_socd_pair_mapping",
                                 0,
                                 12
                             ]
@@ -246,10 +251,11 @@
                             "showIf": "{id_socd_pair_1_status} != 0  && {id_socd_pairs} == 1 && {id_socd_status_global} != 0",
                             "label": "Pair 1 mapping | Maps next 2 keys pressed as an SOCD pair",
                             "type": "button",
+                            "options":[2],
                             "content": [
-                                "id_socd_pair_1_mapping",
+                                "id_socd_pair_mapping",
                                 0,
-                                15
+                                12
                             ]
                         },
                         {
@@ -259,7 +265,7 @@
                             "content": [
                                 "id_socd_pair_1_mode",
                                 0,
-                                16
+                                15
                             ],
                             "options": [
                                 [
@@ -283,17 +289,18 @@
                             "content": [
                                 "id_socd_pair_2_status",
                                 0,
-                                17
+                                16
                             ]
                         },
                         {
                             "showIf": "{id_socd_pair_2_status} != 0  && {id_socd_pairs} == 2 && {id_socd_status_global} != 0",
                             "label": "Pair 2 mapping | Maps next 2 keys pressed as an SOCD pair",
                             "type": "button",
+                            "options":[2],
                             "content": [
-                                "id_socd_pair_2_mapping",
+                                "id_socd_pair_mapping",
                                 0,
-                                18
+                                12
                             ]
                         },
                         {
@@ -303,7 +310,7 @@
                             "content": [
                                 "id_socd_pair_2_mode",
                                 0,
-                                19
+                                17
                             ],
                             "options": [
                                 [

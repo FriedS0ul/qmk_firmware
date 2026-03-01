@@ -13,6 +13,11 @@ void save_to_eeprom(void) {
     eeprom_config.actuation_level_global        = runtime_config.actuation_level_global;
     eeprom_config.release_level_global          = runtime_config.release_level_global;
     eeprom_config.advanced_features_status_bits = runtime_config.advanced_features_status_bits;
+
+    eeprom_config.socd_pair_0 = runtime_config.socd_pair_0;
+    eeprom_config.socd_pair_1 = runtime_config.socd_pair_1;
+    eeprom_config.socd_pair_2 = runtime_config.socd_pair_2;
+
     for (uint8_t col = 0; col < MATRIX_COLS; col++) {
         for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
             eeprom_config.ceiling_level_per_key[col][row] = runtime_config.ceiling_level_per_key[col][row];
@@ -24,10 +29,15 @@ void save_to_eeprom(void) {
 // Обновление runtime_config значениями из EEPROM(eeprom_config)
 void runtime_renew(void) {
     runtime_config.kb_current_operation_mode     = 0;
+    runtime_config.socd_pair_current             = 0;
     runtime_config.console_log_status            = eeprom_config.console_log_status;
     runtime_config.actuation_level_global        = eeprom_config.actuation_level_global;
     runtime_config.release_level_global          = eeprom_config.release_level_global;
     runtime_config.advanced_features_status_bits = eeprom_config.advanced_features_status_bits;
+
+    runtime_config.socd_pair_0 = eeprom_config.socd_pair_0;
+    runtime_config.socd_pair_0 = eeprom_config.socd_pair_0;
+
     for (uint8_t col = 0; col < MATRIX_COLS; col++) {
         for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
             runtime_config.calibration_status_per_key_bits[row] = 0;
@@ -45,6 +55,10 @@ void eeprom_reset(void) {
     eeprom_config.actuation_level_global        = DEFAULT_ACTUATION_LEVEL;
     eeprom_config.release_level_global          = DEFAULT_RELEASE_LEVEL;
     eeprom_config.advanced_features_status_bits = 0;
+
+    memset(&eeprom_config.socd_pair_0, 0, sizeof(eeprom_config.socd_pair_0)); // Обнуляем SOCD пары
+    memset(&eeprom_config.socd_pair_1, 0, sizeof(eeprom_config.socd_pair_1));
+    memset(&eeprom_config.socd_pair_2, 0, sizeof(eeprom_config.socd_pair_2));
 
     for (uint8_t col = 0; col < MATRIX_COLS; col++) {
         for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
