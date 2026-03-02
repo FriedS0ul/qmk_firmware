@@ -3,16 +3,6 @@
 #include "config.h"
 #include "eeprom_config.h"
 
-enum advanced_features_bit_matrix {
-
-    bits_advanced_features_global = 7,
-    bits_socd_status_global       = 6,
-    bits_socd_pair_0_status       = 5,
-    bits_socd_pair_1_status       = 4,
-    bits_socd_pair_2_status       = 3,
-
-};
-
 // Переменные - ID для дополнительных элементов меню в VIA
 enum via_extras_value_ids {
 

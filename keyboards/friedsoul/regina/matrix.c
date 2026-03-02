@@ -8,9 +8,6 @@
 #include "eeprom_config.h"
 
 static const pin_t row_pins[] = MATRIX_ROW_PINS;
-static uint16_t    log_matrix[MATRIX_COLS][MATRIX_ROWS];
-static uint16_t    scan_counter = 0;
-static bool        socd_counter = 0;
 
 eeprom_config_t  eeprom_config;
 runtime_config_t runtime_config;
@@ -26,143 +23,6 @@ void pins_init(void) {
     for (uint8_t i = 0; i < MATRIX_ROWS; i++) {
         gpio_write_pin_low(row_pins[i]);
         gpio_set_pin_output(row_pins[i]);
-    }
-}
-
-// Функция записи координат socd пар (ПОТОМ ВЫНЕСТИ В ОТДЕЛЬНЫЙ SOCD_handler.c)
-void socd_mapping(uint8_t col, uint8_t row) {
-    switch (runtime_config.socd_pair_current) {
-        case 0:
-
-            if (!socd_counter) {
-                runtime_config.socd_pair_0.button_0_pos[0] = col;
-                runtime_config.socd_pair_0.button_0_pos[1] = row;
-                socd_counter                               = 1;
-
-                break;
-            }
-
-            if (socd_counter && (runtime_config.socd_pair_0.button_0_pos[0] != col || runtime_config.socd_pair_0.button_0_pos[1] != row)) {
-                runtime_config.socd_pair_0.button_1_pos[0] = col;
-                runtime_config.socd_pair_0.button_1_pos[1] = row;
-                socd_counter                               = 0;
-                runtime_config.kb_current_operation_mode   = 0;
-
-                break;
-            }
-
-            break;
-
-        case 1:
-
-            if (!socd_counter) {
-                runtime_config.socd_pair_1.button_0_pos[0] = col;
-                runtime_config.socd_pair_1.button_0_pos[1] = row;
-                socd_counter                               = 1;
-
-                break;
-            }
-
-            if (socd_counter && (runtime_config.socd_pair_1.button_0_pos[0] != col || runtime_config.socd_pair_1.button_0_pos[1] != row)) {
-                runtime_config.socd_pair_1.button_1_pos[0] = col;
-                runtime_config.socd_pair_1.button_1_pos[1] = row;
-                socd_counter                               = 0;
-                runtime_config.kb_current_operation_mode   = 0;
-
-                break;
-            }
-
-            break;
-
-        case 2:
-
-            if (!socd_counter) {
-                runtime_config.socd_pair_2.button_0_pos[0] = col;
-                runtime_config.socd_pair_2.button_0_pos[1] = row;
-                socd_counter                               = 1;
-
-                break;
-            }
-
-            if (socd_counter && (runtime_config.socd_pair_2.button_0_pos[0] != col || runtime_config.socd_pair_2.button_0_pos[1] != row)) {
-                runtime_config.socd_pair_2.button_1_pos[0] = col;
-                runtime_config.socd_pair_2.button_1_pos[1] = row;
-                socd_counter                               = 0;
-                runtime_config.kb_current_operation_mode   = 0;
-
-                break;
-            }
-
-            break;
-
-        default:
-            break;
-    }
-}
-
-// Вывод лога кажные N полных сканирований матрицы в консоль
-void logger(void) {
-    if (runtime_config.console_log_status != 0) {
-        if (scan_counter < DEFAULT_CONSOLE_LOG_FREQUENCY) {
-            scan_counter++;
-        } else {
-            switch (runtime_config.console_log_status) {
-                case 1:
-                    uprintf("\r\n");
-                    for (uint8_t col = 0; col < MATRIX_COLS; col++) {
-                        for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
-                            uprintf("%d, %d Floor: %d Ceiling: %d Actuation: %d Release: %d", col, row, runtime_config.floor_level_per_key[col][row], runtime_config.ceiling_level_per_key[col][row], runtime_config.actuation_level_per_key[col][row], runtime_config.release_level_per_key[col][row]);
-                            uprintf("\r\n");
-                        }
-                    }
-                    break;
-
-                case 2:
-                    uprintf("\r\n");
-                    for (uint8_t col = 0; col < MATRIX_COLS; col++) {
-                        for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
-                            uprintf("COL %d ROW %d: %u", col, row, log_matrix[col][row]);
-                            uprintf("\r\n");
-                        }
-                    }
-                    break;
-
-                case 3:
-                    uprintf("\r\n");
-                    uprintf("EEPROM CURRENT SIZE: %zu bytes \n", sizeof(eeprom_config));
-                    uprintf("\r\n");
-                    uprintf("FIRMWARE LEVEL %d\n", eeprom_config.fw_level_number);
-                    uprintf("CURRENT OPERATION MODE %d\n", runtime_config.kb_current_operation_mode);
-                    uprintf("LOG STATUS %d\n", runtime_config.console_log_status);
-                    uprintf("ACTUATION GLOBAL %d\n", runtime_config.actuation_level_global);
-                    uprintf("RELEASE GLOBAL %d\n", runtime_config.release_level_global);
-                    uprintf("\r\n");
-                    break;
-
-                case 4:
-                    uprintf("\r\n");
-                    uprintf("Slot 0 SOCD status %d\n", (runtime_config.advanced_features_status_bits >> 5) & 1);
-                    uprintf("Slot 0 SOCD key 0: %d, %d\n", runtime_config.socd_pair_0.button_0_pos[0], runtime_config.socd_pair_0.button_0_pos[1]);
-                    uprintf("Slot 0 SOCD key 1: %d, %d\n", runtime_config.socd_pair_0.button_1_pos[0], runtime_config.socd_pair_0.button_1_pos[1]);
-                    uprintf("Slot 0 SOCD mode: %d\n", runtime_config.socd_pair_0.pair_mode);
-                    uprintf("\r\n");
-                    uprintf("Slot 0 SOCD status %d\n", (runtime_config.advanced_features_status_bits >> 4) & 1);
-                    uprintf("Slot 1 SOCD key 0: %d, %d\n", runtime_config.socd_pair_1.button_0_pos[0], runtime_config.socd_pair_1.button_0_pos[1]);
-                    uprintf("Slot 1 SOCD key 1: %d, %d\n", runtime_config.socd_pair_1.button_1_pos[0], runtime_config.socd_pair_1.button_1_pos[1]);
-                    uprintf("Slot 1 SOCD mode: %d\n", runtime_config.socd_pair_1.pair_mode);
-                    uprintf("\r\n");
-                    uprintf("Slot 0 SOCD status %d\n", (runtime_config.advanced_features_status_bits >> 3) & 1);
-                    uprintf("Slot 2 SOCD key 0: %d, %d\n", runtime_config.socd_pair_2.button_0_pos[0], runtime_config.socd_pair_2.button_0_pos[1]);
-                    uprintf("Slot 2 SOCD key 1: %d, %d\n", runtime_config.socd_pair_2.button_1_pos[0], runtime_config.socd_pair_2.button_1_pos[1]);
-                    uprintf("Slot 2 SOCD mode: %d\n", runtime_config.socd_pair_2.pair_mode);
-                    uprintf("\r\n");
-                    break;
-
-                default:
-                    break;
-            }
-            scan_counter = 0;
-        }
     }
 }
 
@@ -246,6 +106,7 @@ bool ec_matrix_scan(matrix_row_t current_matrix[]) {
 
                     if (raw_adc_readings > runtime_config.actuation_level_per_key[col][row] && key_previous_state == 0) {
                         current_matrix[row] |= (1 << col); // Нажимаем
+                        socd_handler(current_matrix, col, row);
                         has_changed = true;
                     }
 
@@ -282,7 +143,7 @@ bool ec_matrix_scan(matrix_row_t current_matrix[]) {
                         break;
                     }
 
-                    socd_mapping(col, row);
+                    socd_mapper(col, row);
 
                     break;
 
@@ -291,6 +152,7 @@ bool ec_matrix_scan(matrix_row_t current_matrix[]) {
             }
         }
     }
+
     return has_changed;
 }
 

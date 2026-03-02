@@ -17,7 +17,8 @@
                 "D:/QMK/platforms/avr",
                 "D:\\QMK_MSYS\\mingw64\\avr\\include",
                 "D:/QMK/quantum/logging",
-                "D:/QMK/quantum/sequencer"
+                "D:/QMK/quantum/sequencer",
+                "${workspaceFolder}"
             ],
             "defines": [
                 "_DEBUG",

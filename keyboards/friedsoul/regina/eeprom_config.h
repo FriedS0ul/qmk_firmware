@@ -4,12 +4,24 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "config.h"
+#include "quantum.h"
 
 /*
 bool - 1 байт
 unt8_t - 1 байт
 uint16_t - 2 байта
 */
+
+// Enums для advanced_features_status_bits
+enum advanced_features_bit_ids {
+
+    bits_advanced_features_global = 7,
+    bits_socd_status_global       = 6,
+    bits_socd_pair_0_status       = 5,
+    bits_socd_pair_1_status       = 4,
+    bits_socd_pair_2_status       = 3
+
+};
 
 // Структуры для записи адресов SOCD пар
 struct socd_pair_0_t {
@@ -62,7 +74,7 @@ typedef struct {
     struct socd_pair_0_t socd_pair_0;                           // SOCD пара 0
     struct socd_pair_1_t socd_pair_1;                           // SOCD пара 1
     struct socd_pair_2_t socd_pair_2;                           // SOCD пара 2
-    uint8_t socd_pair_current;
+    uint8_t              socd_pair_current;
 
 // Битовые матрицы статуса калибровки
 #if (MATRIX_COLS <= 8)
@@ -78,6 +90,11 @@ typedef struct {
 
 extern runtime_config_t runtime_config;
 
+
+uint16_t log_matrix[MATRIX_COLS][MATRIX_ROWS];
+void logger(void);
 void runtime_renew(void);
 void eeprom_reset(void);
 void save_to_eeprom(void);
+void socd_mapper(uint8_t col, uint8_t row);
+void socd_handler(matrix_row_t current_matrix[], uint8_t col, uint8_t row);
