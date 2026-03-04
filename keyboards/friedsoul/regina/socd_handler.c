@@ -96,34 +96,30 @@ void socd_mapper(uint8_t col, uint8_t row) {
 }
 
 // Меняет current_matrix на основе полученных данных и режима SOCD пары
-static inline void socd_handler_helper(matrix_row_t current_matrix[], uint8_t col, uint8_t row, uint8_t opposed_key[2]) {
-    switch (runtime_config.socd_pair_0.pair_mode) {
+static inline void socd_handler_helper(matrix_row_t current_matrix[], uint8_t col, uint8_t row, uint8_t opposed_key[2], uint8_t pair_mode) {
+    switch (pair_mode) {
         // LAST WINS
         case 0:
-            uprintf("SOCD LAST WINS");
-            uprintf("\r\n");
             current_matrix[row] |= (1 << col);                        // Нажимаем
             current_matrix[opposed_key[1]] &= ~(1 << opposed_key[0]); // Отпускаем SOCD пару
 
             break;
         // NEUTRAL
         case 1:
-            if (((current_matrix[row] >> col) & 1) && ((current_matrixp[opposed_key[1]] >> opposed_key[0]) & 1)) {
-                uprintf("SOCD NEUTRAL");
-                uprintf("\r\n");
-                current_matrix[row] &= ~(1 << col);                       // Отпускаем
+            if ((current_matrix[opposed_key[1]] >> opposed_key[0]) & 1) {
+                current_matrix[row] &= ~(1 << col); // Отпускаем текущую
                 current_matrix[opposed_key[1]] &= ~(1 << opposed_key[0]); // Отпускаем SOCD пару
                 break;
             }
+            current_matrix[row] |= (1 << col);                        // Нажимаем
             break;
         // FIRST WINS
         case 2:
             if ((current_matrix[opposed_key[1]] >> opposed_key[0]) & 1) {
-                uprintf("SOCD FIRST WINS");
-                uprintf("\r\n");
-                current_matrix[row] &= ~(1 << col); // Отпускаем
+                // Не регистрируем нажатие 
                 break;
             }
+            current_matrix[row] |= (1 << col);                        // Нажимаем
             break;
     }
 }
@@ -133,41 +129,38 @@ void inline socd_handler(matrix_row_t current_matrix[], uint8_t col, uint8_t row
     // Слот 0
     if ((runtime_config.advanced_features_status_bits >> bits_socd_pair_0_status) & 1) {
         if (col == runtime_config.socd_pair_0.button_0_pos[0] && row == runtime_config.socd_pair_0.button_0_pos[1]) {
-            socd_handler_helper(current_matrix, col, row, runtime_config.socd_pair_0.button_1_pos);
+            socd_handler_helper(current_matrix, col, row, runtime_config.socd_pair_0.button_1_pos, runtime_config.socd_pair_0.pair_mode);
             return;
         }
 
         if (col == runtime_config.socd_pair_0.button_1_pos[0] && row == runtime_config.socd_pair_0.button_1_pos[1]) {
-            socd_handler_helper(current_matrix, col, row, runtime_config.socd_pair_0.button_0_pos);
+            socd_handler_helper(current_matrix, col, row, runtime_config.socd_pair_0.button_0_pos, runtime_config.socd_pair_0.pair_mode);
             return;
         }
     }
     // Слот 1
     if ((runtime_config.advanced_features_status_bits >> bits_socd_pair_1_status) & 1) {
         if (col == runtime_config.socd_pair_1.button_0_pos[0] && row == runtime_config.socd_pair_1.button_0_pos[1]) {
-            socd_handler_helper(current_matrix, col, row, runtime_config.socd_pair_1.button_1_pos);
+            socd_handler_helper(current_matrix, col, row, runtime_config.socd_pair_1.button_1_pos, runtime_config.socd_pair_1.pair_mode);
             return;
         }
 
         if (col == runtime_config.socd_pair_1.button_1_pos[0] && row == runtime_config.socd_pair_1.button_1_pos[1]) {
-            socd_handler_helper(current_matrix, col, row, runtime_config.socd_pair_1.button_0_pos);
+            socd_handler_helper(current_matrix, col, row, runtime_config.socd_pair_1.button_0_pos, runtime_config.socd_pair_1.pair_mode);
             return;
         }
     }
     // Слот 2
     if ((runtime_config.advanced_features_status_bits >> bits_socd_pair_2_status) & 1) {
         if (col == runtime_config.socd_pair_2.button_0_pos[0] && row == runtime_config.socd_pair_2.button_0_pos[1]) {
-            socd_handler_helper(current_matrix, col, row, runtime_config.socd_pair_2.button_1_pos);
+            socd_handler_helper(current_matrix, col, row, runtime_config.socd_pair_2.button_1_pos, runtime_config.socd_pair_2.pair_mode);
             return;
         }
 
         if (col == runtime_config.socd_pair_2.button_1_pos[0] && row == runtime_config.socd_pair_2.button_1_pos[1]) {
-            socd_handler_helper(current_matrix, col, row, runtime_config.socd_pair_2.button_0_pos);
+            socd_handler_helper(current_matrix, col, row, runtime_config.socd_pair_2.button_0_pos, runtime_config.socd_pair_2.pair_mode);
             return;
         }
     }
-
-    uprintf("SOCD IS OFF");
-    uprintf("\r\n");
     current_matrix[row] |= (1 << col); // Нажимаем (Если слоты SOCD неактивны)
 }

@@ -26,6 +26,13 @@ void pins_init(void) {
     }
 }
 
+static inline bool is_socd_on(void){
+    if (((runtime_config.advanced_features_status_bits >> bits_advanced_features_global) & 1) && ((runtime_config.advanced_features_status_bits >> bits_socd_status_global) & 1)){
+        return true;
+    }
+    return false;
+}
+
 // Зарядка ряда для сканирования
 void ec_sw_charge(uint8_t row) {
     gpio_write_pin_high(row_pins[row]);
@@ -99,14 +106,20 @@ bool ec_matrix_scan(matrix_row_t current_matrix[]) {
                 case 0:
                     raw_adc_readings           = ec_sw_scan(col, row);
                     uint8_t key_previous_state = (current_matrix[row] >> col) & 1; // Запрашиваем текущее состояние клавиши (нажата или отпущена)
-
+                    
                     if (raw_adc_readings <= runtime_config.floor_level_per_key[col][row]) {
                         break;
                     }
 
                     if (raw_adc_readings > runtime_config.actuation_level_per_key[col][row] && key_previous_state == 0) {
+                        /*
+                        if (is_socd_on()){
+                            socd_handler(current_matrix, col, row);
+                            has_changed = true;
+                            break;
+                        }
+                        */
                         current_matrix[row] |= (1 << col); // Нажимаем
-                        socd_handler(current_matrix, col, row);
                         has_changed = true;
                     }
 

@@ -25,4 +25,4 @@
 #define DEFAULT_CONSOLE_LOG_FREQUENCY 10000 // Раз в сколько полных сканирований матрицы данные будут выводится в консоль. Частота зависит от размера матрица. Рекомендую не ниже 1000
 
 #define FIRMWARE_LEVEL_NUMBER 1
-#define EECONFIG_KB_DATA_SIZE 32
+#define EECONFIG_KB_DATA_SIZE 64

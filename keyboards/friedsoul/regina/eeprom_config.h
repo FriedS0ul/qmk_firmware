@@ -76,6 +76,10 @@ typedef struct {
     struct socd_pair_2_t socd_pair_2;                           // SOCD пара 2
     uint8_t              socd_pair_current;
 
+    uint8_t key_0_previous_state;
+    uint8_t key_1_previous_state;
+    uint8_t key_wins;
+
 // Битовые матрицы статуса калибровки
 #if (MATRIX_COLS <= 8)
     uint8_t calibration_status_per_key_bits[MATRIX_ROWS];
