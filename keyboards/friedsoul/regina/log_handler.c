@@ -48,17 +48,14 @@ void logger(void) {
                     uprintf("\r\n");
                     uprintf("CURRENT PAIR: %d", runtime_config.socd_pair_current);
                     uprintf("\r\n");
-                    uprintf("Slot 0 SOCD status %d\n", (runtime_config.advanced_features_status_bits >> bits_socd_pair_0_status) & 1);
                     uprintf("Slot 0 SOCD key 0: %d, %d\n", runtime_config.socd_pair_0.button_0_pos[0], runtime_config.socd_pair_0.button_0_pos[1]);
                     uprintf("Slot 0 SOCD key 1: %d, %d\n", runtime_config.socd_pair_0.button_1_pos[0], runtime_config.socd_pair_0.button_1_pos[1]);
                     uprintf("Slot 0 SOCD mode: %d\n", runtime_config.socd_pair_0.pair_mode);
                     uprintf("\r\n");
-                    uprintf("Slot 0 SOCD status %d\n", (runtime_config.advanced_features_status_bits >> bits_socd_pair_1_status) & 1);
                     uprintf("Slot 1 SOCD key 0: %d, %d\n", runtime_config.socd_pair_1.button_0_pos[0], runtime_config.socd_pair_1.button_0_pos[1]);
                     uprintf("Slot 1 SOCD key 1: %d, %d\n", runtime_config.socd_pair_1.button_1_pos[0], runtime_config.socd_pair_1.button_1_pos[1]);
                     uprintf("Slot 1 SOCD mode: %d\n", runtime_config.socd_pair_1.pair_mode);
                     uprintf("\r\n");
-                    uprintf("Slot 0 SOCD status %d\n", (runtime_config.advanced_features_status_bits >> bits_socd_pair_2_status) & 1);
                     uprintf("Slot 2 SOCD key 0: %d, %d\n", runtime_config.socd_pair_2.button_0_pos[0], runtime_config.socd_pair_2.button_0_pos[1]);
                     uprintf("Slot 2 SOCD key 1: %d, %d\n", runtime_config.socd_pair_2.button_1_pos[0], runtime_config.socd_pair_2.button_1_pos[1]);
                     uprintf("Slot 2 SOCD mode: %d\n", runtime_config.socd_pair_2.pair_mode);

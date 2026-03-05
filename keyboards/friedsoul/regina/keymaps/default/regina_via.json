@@ -116,6 +116,26 @@
                     "label": "Actuation setup",
                     "content": [
                         {
+                            "showIf": "{id_show_advanced_features} != 0",
+                            "label": "Actuation mode",
+                            "type": "dropdown",
+                            "content": [
+                                "id_actuation_mode_current",
+                                0,
+                                15
+                            ],
+                            "options": [
+                                [
+                                    "VAP",
+                                    0
+                                ],
+                                [
+                                    "Rapid trigger",
+                                    1
+                                ]
+                            ]
+                        },
+                        {
                             "label": "Actuation level (Always > Release level)",
                             "type": "range",
                             "options": [
@@ -157,7 +177,7 @@
                 },
                 {
                     "showIf": "{id_show_advanced_features} != 0",
-                    "label": "Advanced features",
+                    "label": "SOCD",
                     "content": [
                         {
                             "label": "SOCD | On / Off",
@@ -173,7 +193,7 @@
                             "label": "SOCD Pairs",
                             "type": "dropdown",
                             "content": [
-                                "id_socd_pairs",
+                                "id_socd_pair_current",
                                 0,
                                 10
                             ],
@@ -193,62 +213,75 @@
                             ]
                         },
                         {
-                            "showIf": "{id_socd_pairs} == 0 && {id_socd_status_global} != 0",
-                            "label": "Pair 0 | On / Off",
-                            "type": "toggle",
+                            "showIf": "{id_socd_pair_current} == 0 && {id_socd_status_global} != 0",
+                            "label": "Pair 0 mode",
+                            "type": "dropdown",
                             "content": [
-                                "id_socd_pair_0_status",
+                                "id_socd_pair_0_mode",
                                 0,
-                                11
+                                12
+                            ],
+                            "options": [
+                                [
+                                    "OFF",
+                                    0
+                                ],
+                                [
+                                    "Last wins",
+                                    1
+                                ],
+                                [
+                                    "Neutral",
+                                    2
+                                ],
+                                [
+                                    "First wins",
+                                    3
+                                ]
                             ]
                         },
                         {
-                            "showIf": "{id_socd_pair_0_status} != 0 && {id_socd_pairs} == 0 && {id_socd_status_global} != 0",
+                            "showIf": "{id_socd_pair_current} == 0 && {id_socd_status_global} != 0",
                             "label": "Pair 0 mapping | Maps next 2 keys pressed as an SOCD pair",
                             "type": "button",
                             "options":[2],
                             "content": [
                                 "id_socd_pair_mapping",
                                 0,
-                                12
+                                11
                             ]
                         },
+                        
                         {
-                            "showIf": "{id_socd_pair_0_status} != 0 && {id_socd_pairs} == 0 && {id_socd_status_global} != 0",
-                            "label": "Pair 0 mode",
+                            "showIf": "{id_socd_pair_current} == 1 && {id_socd_status_global} != 0",
+                            "label": "Pair 1 mode",
                             "type": "dropdown",
                             "content": [
-                                "id_socd_pair_0_mode",
+                                "id_socd_pair_1_mode",
                                 0,
                                 13
                             ],
                             "options": [
-                                [
-                                    "Last wins",
+                                 [
+                                    "OFF",
                                     0
                                 ],
                                 [
-                                    "Neutral",
+                                    "Last wins",
                                     1
                                 ],
                                 [
-                                    "First wins",
+                                    "Neutral",
                                     2
+                                ],
+                                [
+                                    "First wins",
+                                    3
                                 ]
                             ]
                         },
                         {
-                            "showIf": "{id_socd_pairs} == 1 && {id_socd_status_global} != 0",
-                            "label": "Pair 1 | On / Off",
-                            "type": "toggle",
-                            "content": [
-                                "id_socd_pair_1_status",
-                                0,
-                                14
-                            ]
-                        },
-                        {
-                            "showIf": "{id_socd_pair_1_status} != 0  && {id_socd_pairs} == 1 && {id_socd_status_global} != 0",
+                            "showIf": "{id_socd_pair_current} == 1 && {id_socd_status_global} != 0",
                             "label": "Pair 1 mapping | Maps next 2 keys pressed as an SOCD pair",
                             "type": "button",
                             "options":[2],
@@ -259,41 +292,35 @@
                             ]
                         },
                         {
-                            "showIf": "{id_socd_pair_1_status} != 0  && {id_socd_pairs} == 1 && {id_socd_status_global} != 0",
-                            "label": "Pair 1 mode",
+                            "showIf": "{id_socd_pair_current} == 2 && {id_socd_status_global} != 0",
+                            "label": "Pair 2 mode",
                             "type": "dropdown",
                             "content": [
-                                "id_socd_pair_1_mode",
+                                "id_socd_pair_2_mode",
                                 0,
-                                15
+                                14
                             ],
                             "options": [
-                                [
-                                    "Last wins",
+                                 [
+                                    "OFF",
                                     0
                                 ],
                                 [
-                                    "Neutral",
+                                    "Last wins",
                                     1
                                 ],
                                 [
-                                    "First wins",
+                                    "Neutral",
                                     2
+                                ],
+                                [
+                                    "First wins",
+                                    3
                                 ]
                             ]
                         },
-                        {
-                            "showIf": "{id_socd_pairs} == 2 && {id_socd_status_global} != 0",
-                            "label": "Pair 2 | On / Off",
-                            "type": "toggle",
-                            "content": [
-                                "id_socd_pair_2_status",
-                                0,
-                                16
-                            ]
-                        },
-                        {
-                            "showIf": "{id_socd_pair_2_status} != 0  && {id_socd_pairs} == 2 && {id_socd_status_global} != 0",
+                         {
+                            "showIf": "{id_socd_pair_current} == 2 && {id_socd_status_global} != 0",
                             "label": "Pair 2 mapping | Maps next 2 keys pressed as an SOCD pair",
                             "type": "button",
                             "options":[2],
@@ -301,30 +328,6 @@
                                 "id_socd_pair_mapping",
                                 0,
                                 12
-                            ]
-                        },
-                        {
-                            "showIf": "{id_socd_pair_2_status} != 0  && {id_socd_pairs} == 2 && {id_socd_status_global} != 0",
-                            "label": "Pair 2 mode",
-                            "type": "dropdown",
-                            "content": [
-                                "id_socd_pair_2_mode",
-                                0,
-                                17
-                            ],
-                            "options": [
-                                [
-                                    "Last wins",
-                                    0
-                                ],
-                                [
-                                    "Neutral",
-                                    1
-                                ],
-                                [
-                                    "First wins",
-                                    2
-                                ]
                             ]
                         },
                         {

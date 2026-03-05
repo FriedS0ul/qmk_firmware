@@ -26,8 +26,8 @@ void pins_init(void) {
     }
 }
 
-static inline bool is_socd_on(void){
-    if (((runtime_config.advanced_features_status_bits >> bits_advanced_features_global) & 1) && ((runtime_config.advanced_features_status_bits >> bits_socd_status_global) & 1)){
+static inline bool is_socd_on(void) {
+    if (((runtime_config.advanced_features_status_bits >> bits_advanced_features_global) & 1) && ((runtime_config.advanced_features_status_bits >> bits_socd_status_global) & 1)) {
         return true;
     }
     return false;
@@ -96,7 +96,12 @@ void ec_floor_sample(void) {
 
 // Функция сканирования и обновления current matrix
 bool ec_matrix_scan(matrix_row_t current_matrix[]) {
-    bool has_changed = false;
+    bool    has_changed = false;
+
+    uint8_t socd_keys_raw_states_bits; // | Slot 2 key 0 | Slot 2 key 0 | 0 | Slot 1 key 1 | Slot 1 key 0 | 0 | Slot 0 key 1 | Slot 0 key 0
+
+    uint8_t socd_key_0_raw;
+    uint8_t socd_key_1_raw;
 
     for (uint8_t col = 0; col < MATRIX_COLS; col++) {
         for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
@@ -106,19 +111,12 @@ bool ec_matrix_scan(matrix_row_t current_matrix[]) {
                 case 0:
                     raw_adc_readings           = ec_sw_scan(col, row);
                     uint8_t key_previous_state = (current_matrix[row] >> col) & 1; // Запрашиваем текущее состояние клавиши (нажата или отпущена)
-                    
+
                     if (raw_adc_readings <= runtime_config.floor_level_per_key[col][row]) {
                         break;
                     }
 
                     if (raw_adc_readings > runtime_config.actuation_level_per_key[col][row] && key_previous_state == 0) {
-                        /*
-                        if (is_socd_on()){
-                            socd_handler(current_matrix, col, row);
-                            has_changed = true;
-                            break;
-                        }
-                        */
                         current_matrix[row] |= (1 << col); // Нажимаем
                         has_changed = true;
                     }
@@ -126,6 +124,13 @@ bool ec_matrix_scan(matrix_row_t current_matrix[]) {
                     if (raw_adc_readings < runtime_config.release_level_per_key[col][row] && key_previous_state == 1) {
                         current_matrix[row] &= ~(1 << col); // Отпускаем
                         has_changed = true;
+                    }
+
+                    if ((col == runtime_config.socd_pair_0.button_0_pos[0]) && (row == runtime_config.socd_pair_0.button_0_pos[1])) {
+                        socd_key_0_raw = (current_matrix[row] >> col) & 1;
+                    }
+                    if ((col == runtime_config.socd_pair_1.button_0_pos[0]) && (row == runtime_config.socd_pair_1.button_0_pos[1])) {
+                        socd_key_1_raw = (current_matrix[row] >> col) & 1;
                     }
 
                     break;
@@ -165,6 +170,7 @@ bool ec_matrix_scan(matrix_row_t current_matrix[]) {
             }
         }
     }
+
 
     return has_changed;
 }

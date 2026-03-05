@@ -15,14 +15,12 @@ enum via_extras_value_ids {
     id_kb_reset               = 7,  // button
     id_show_advanced_features = 8,  // toggle
     id_socd_status_global     = 9,  // toggle
-    id_socd_pairs             = 10, // dropdown
-    id_socd_pair_0_status     = 11, // toggle
-    id_socd_pair_mapping      = 12, // button
-    id_socd_pair_0_mode       = 13, // dropdown
-    id_socd_pair_1_status     = 14, // toggle
-    id_socd_pair_1_mode       = 15, // dropdown
-    id_socd_pair_2_status     = 16, // toggle
-    id_socd_pair_2_mode       = 17, // dropdown
+    id_socd_pair_current      = 10, // dropdown
+    id_socd_pair_mapping      = 11, // button
+    id_socd_pair_0_mode       = 12, // dropdown
+    id_socd_pair_1_mode       = 13, // dropdown
+    id_socd_pair_2_mode       = 14, // dropdown
+    id_actuation_mode_global  = 15  // dropdown
 
 };
 
@@ -54,7 +52,6 @@ void via_custom_config_via_to_kb(uint8_t *data) {
             break;
 
         case id_show_advanced_features:
-
             switch (*value_data) {
                 case 1:
                     runtime_config.advanced_features_status_bits |= (1 << bits_advanced_features_global);
@@ -69,11 +66,9 @@ void via_custom_config_via_to_kb(uint8_t *data) {
                 default:
                     break;
             }
-
             break;
 
         case id_socd_status_global:
-
             switch (*value_data) {
                 case 1:
                     runtime_config.advanced_features_status_bits |= (1 << bits_socd_status_global);
@@ -88,31 +83,11 @@ void via_custom_config_via_to_kb(uint8_t *data) {
                 default:
                     break;
             }
-
             break;
 
-        case id_socd_pairs:
+        case id_socd_pair_current:
 
             runtime_config.socd_pair_current = *value_data;
-
-            break;
-
-        case id_socd_pair_0_status:
-
-            switch (*value_data) {
-                case 1:
-                    runtime_config.advanced_features_status_bits |= (1 << bits_socd_pair_0_status);
-
-                    break;
-
-                case 0:
-                    runtime_config.advanced_features_status_bits &= ~(1 << bits_socd_pair_0_status);
-
-                    break;
-
-                default:
-                    break;
-            }
 
             break;
 
@@ -126,50 +101,30 @@ void via_custom_config_via_to_kb(uint8_t *data) {
 
             break;
 
-        case id_socd_pair_1_status:
-
-            switch (*value_data) {
-                case 1:
-                    runtime_config.advanced_features_status_bits |= (1 << bits_socd_pair_1_status);
-                    break;
-
-                case 0:
-                    runtime_config.advanced_features_status_bits &= ~(1 << bits_socd_pair_1_status);
-
-                    break;
-
-                default:
-                    break;
-            }
-
-            break;
-
         case id_socd_pair_1_mode:
             runtime_config.socd_pair_1.pair_mode = *value_data;
-
-            break;
-
-        case id_socd_pair_2_status:
-            switch (*value_data) {
-                case 1:
-                    runtime_config.advanced_features_status_bits |= (1 << bits_socd_pair_2_status);
-
-                    break;
-
-                case 0:
-                    runtime_config.advanced_features_status_bits &= ~(1 << bits_socd_pair_2_status);
-
-                    break;
-
-                default:
-                    break;
-            }
 
             break;
 
         case id_socd_pair_2_mode:
             runtime_config.socd_pair_2.pair_mode = *value_data;
 
+            break;
+
+        case id_actuation_mode_global:
+
+            switch (*value_data)
+            {
+            case 0:
+                runtime_config.advanced_features_status_bits &= ~(1 << bits_actuation_mode_global);
+
+                break;
+        
+            case 1:
+                runtime_config.advanced_features_status_bits |= (1 << bits_actuation_mode_global);
+
+                break;
+            }
             break;
 
         case id_show_kb_reset:
@@ -233,37 +188,33 @@ void via_custom_config_via_from_kb(uint8_t *data) {
 
             break;
 
-        case id_socd_pairs:
-
-            break;
-
-        case id_socd_pair_0_status:
-            *value_data = (runtime_config.advanced_features_status_bits >> bits_socd_pair_0_status) & 1;
+        case id_socd_pair_current:
 
             break;
 
         case id_socd_pair_0_mode:
-            break;
-
-        case id_socd_pair_1_status:
-            *value_data = (runtime_config.advanced_features_status_bits >> bits_socd_pair_1_status) & 1;
+            *value_data = runtime_config.socd_pair_0.pair_mode;
 
             break;
 
         case id_socd_pair_1_mode:
-            break;
-
-        case id_socd_pair_2_status:
-            *value_data = (runtime_config.advanced_features_status_bits >> bits_socd_pair_2_status) & 1;
+            *value_data = runtime_config.socd_pair_1.pair_mode;
 
             break;
 
         case id_socd_pair_2_mode:
+            *value_data = runtime_config.socd_pair_2.pair_mode;
+
+            break;
+
+        case id_actuation_mode_global:
+
+            *value_data = (runtime_config.advanced_features_status_bits >> bits_actuation_mode_global) & 1;
 
             break;
 
         case id_show_kb_reset:
-
+            // Ничего
             break;
 
         default:

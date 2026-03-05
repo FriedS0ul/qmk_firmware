@@ -95,72 +95,50 @@ void socd_mapper(uint8_t col, uint8_t row) {
     }
 }
 
-// Меняет current_matrix на основе полученных данных и режима SOCD пары
-static inline void socd_handler_helper(matrix_row_t current_matrix[], uint8_t col, uint8_t row, uint8_t opposed_key[2], uint8_t pair_mode) {
-    switch (pair_mode) {
-        // LAST WINS
-        case 0:
-            current_matrix[row] |= (1 << col);                        // Нажимаем
-            current_matrix[opposed_key[1]] &= ~(1 << opposed_key[0]); // Отпускаем SOCD пару
+void socd_perform_new(matrix_row_t current_matrix[], uint8_t socd_keys_raw_states_bits) {
+    bool event_key_0_pressed;
+    bool event_key_1_pressed;
 
-            break;
-        // NEUTRAL
-        case 1:
-            if ((current_matrix[opposed_key[1]] >> opposed_key[0]) & 1) {
-                current_matrix[row] &= ~(1 << col); // Отпускаем текущую
-                current_matrix[opposed_key[1]] &= ~(1 << opposed_key[0]); // Отпускаем SOCD пару
-                break;
-            }
-            current_matrix[row] |= (1 << col);                        // Нажимаем
-            break;
-        // FIRST WINS
-        case 2:
-            if ((current_matrix[opposed_key[1]] >> opposed_key[0]) & 1) {
-                // Не регистрируем нажатие 
-                break;
-            }
-            current_matrix[row] |= (1 << col);                        // Нажимаем
-            break;
+    if (runtime_config.socd_pair_0.pair_mode != 0) {
+        event_key_0_pressed = (((runtime_config.socd_pair_0_flags_bits >> bits_key_0_previous_state) & 1) == 0 && ((socd_keys_raw_states_bits >> bits_slot_0_key_0) & 1) == 1);
+        event_key_1_pressed = (((runtime_config.socd_pair_0_flags_bits >> bits_key_1_previous_state) & 1) == 0 && ((socd_keys_raw_states_bits >> bits_slot_0_key_1) & 1) == 1);
+
+        if (event_key_0_pressed && ((socd_keys_raw_states_bits >> bits_slot_0_key_1) & 1) == 0) {
+            runtime_config.socd_pair_0_flags_bits &= ~(1 << bits_winner_key);
+        }
+
+        if (event_key_1_pressed && ((socd_keys_raw_states_bits >> bits_slot_0_key_0) & 1) == 0) {
+            runtime_config.socd_pair_0_flags_bits |= (1 << bits_winner_key);
+        }
     }
 }
 
-// Проверяет входит ли переданный адрес в SOCD пару и в случае совпадение передает данные в socd_handler_helper
-void inline socd_handler(matrix_row_t current_matrix[], uint8_t col, uint8_t row) {
-    // Слот 0
-    if ((runtime_config.advanced_features_status_bits >> bits_socd_pair_0_status) & 1) {
-        if (col == runtime_config.socd_pair_0.button_0_pos[0] && row == runtime_config.socd_pair_0.button_0_pos[1]) {
-            socd_handler_helper(current_matrix, col, row, runtime_config.socd_pair_0.button_1_pos, runtime_config.socd_pair_0.pair_mode);
-            return;
-        }
+void socd_perform(matrix_row_t current_matrix[], uint8_t socd_key_0_now, uint8_t socd_key_1_now) {
+    uint8_t event_pressed_key_0 = (runtime_config.pair_0_key_0_previous_state == 0 && socd_key_0_now == 1);
+    uint8_t event_pressed_key_1 = (runtime_config.pair_0_key_1_previous_state == 0 && socd_key_1_now == 1);
 
-        if (col == runtime_config.socd_pair_0.button_1_pos[0] && row == runtime_config.socd_pair_0.button_1_pos[1]) {
-            socd_handler_helper(current_matrix, col, row, runtime_config.socd_pair_0.button_0_pos, runtime_config.socd_pair_0.pair_mode);
-            return;
+    if (event_pressed_key_0 == 1 && socd_key_1_now == 0) {
+        runtime_config.pair_0_key_winnner = 0;
+    }
+
+    if (event_pressed_key_1 == 1 && socd_key_0_now == 0) {
+        runtime_config.pair_0_key_winnner = 1;
+    }
+
+    if (socd_key_0_now == 1 && socd_key_1_now == 1) {
+        switch (runtime_config.pair_0_key_winnner) {
+            case 0:
+                // тут меняем матрицу в соответствии с режимом
+                break;
+            case 1:
+                // тут меняем матрицу в соответствии с режимом
+                break;
+                ...
+
+                    default : break;
         }
     }
-    // Слот 1
-    if ((runtime_config.advanced_features_status_bits >> bits_socd_pair_1_status) & 1) {
-        if (col == runtime_config.socd_pair_1.button_0_pos[0] && row == runtime_config.socd_pair_1.button_0_pos[1]) {
-            socd_handler_helper(current_matrix, col, row, runtime_config.socd_pair_1.button_1_pos, runtime_config.socd_pair_1.pair_mode);
-            return;
-        }
 
-        if (col == runtime_config.socd_pair_1.button_1_pos[0] && row == runtime_config.socd_pair_1.button_1_pos[1]) {
-            socd_handler_helper(current_matrix, col, row, runtime_config.socd_pair_1.button_0_pos, runtime_config.socd_pair_1.pair_mode);
-            return;
-        }
-    }
-    // Слот 2
-    if ((runtime_config.advanced_features_status_bits >> bits_socd_pair_2_status) & 1) {
-        if (col == runtime_config.socd_pair_2.button_0_pos[0] && row == runtime_config.socd_pair_2.button_0_pos[1]) {
-            socd_handler_helper(current_matrix, col, row, runtime_config.socd_pair_2.button_1_pos, runtime_config.socd_pair_2.pair_mode);
-            return;
-        }
-
-        if (col == runtime_config.socd_pair_2.button_1_pos[0] && row == runtime_config.socd_pair_2.button_1_pos[1]) {
-            socd_handler_helper(current_matrix, col, row, runtime_config.socd_pair_2.button_0_pos, runtime_config.socd_pair_2.pair_mode);
-            return;
-        }
-    }
-    current_matrix[row] |= (1 << col); // Нажимаем (Если слоты SOCD неактивны)
+    runtime_config.pair_0_key_0_previous_state = socd_key_0_now;
+    runtime_config.pair_0_key_1_previous_state = socd_key_1_now;
 }

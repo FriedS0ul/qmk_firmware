@@ -17,9 +17,28 @@ enum advanced_features_bit_ids {
 
     bits_advanced_features_global = 7,
     bits_socd_status_global       = 6,
-    bits_socd_pair_0_status       = 5,
-    bits_socd_pair_1_status       = 4,
-    bits_socd_pair_2_status       = 3
+    bits_actuation_mode_global    = 5
+
+};
+
+enum socd_pair_flags_bit_ids {
+
+    bits_winner_key           = 0,
+    bits_key_0_previous_state = 1,
+    bits_key_1_previous_state = 2
+
+};
+
+enum socd_keys_raw_states_bit_ids {
+
+    bits_slot_0_key_0 = 0,
+    bits_slot_0_key_1 = 1,
+
+    bits_slot_1_key_0 = 3,
+    bits_slot_1_key_1 = 4,
+
+    bits_slot_2_key_0 = 6,
+    bits_slot_2_key_1 = 7,
 
 };
 
@@ -27,19 +46,19 @@ enum advanced_features_bit_ids {
 struct socd_pair_0_t {
     uint8_t button_0_pos[2]; // {col, row}
     uint8_t button_1_pos[2]; // {col, row}
-    uint8_t pair_mode;
+    uint8_t pair_mode;       // 0 - OFF, 1 - Last wins, 2 - Neutral, 3 - First wins
 };
 
 struct socd_pair_1_t {
     uint8_t button_0_pos[2]; // {col, row}
     uint8_t button_1_pos[2]; // {col, row}
-    uint8_t pair_mode;
+    uint8_t pair_mode;       // 0 - OFF, 1 - Last wins, 2 - Neutral, 3 - First wins
 };
 
 struct socd_pair_2_t {
     uint8_t button_0_pos[2]; // {col, row}
     uint8_t button_1_pos[2]; // {col, row}
-    uint8_t pair_mode;
+    uint8_t pair_mode;       // 0 - OFF, 1 - Last wins, 2 - Neutral, 3 - First wins
 };
 
 // Структура для записи/чтения данных из eeprom
@@ -49,8 +68,8 @@ typedef struct {
     uint16_t ceiling_level_per_key[MATRIX_COLS][MATRIX_ROWS]; // Максимальное значение клавиши (Полностью нажата)
     uint16_t actuation_level_global;                          // Точка активации глобальная | 0 - 1023
     uint16_t release_level_global;                            // Точка деактивации глобальная | 0 - 1023
-    uint8_t  advanced_features_status_bits;                   // |         7         |      6      |       5       |       4       |       3       | 2 | 1 | 0 |
-                                                              // | Advanced features | SOCD Global | Pair 0 status | Pair 1 status | Pair 2 status | 0 | 0 | 0 |
+    uint8_t  advanced_features_status_bits;                   // |         7         |      6      |            5          | 4 | 3 | 2 | 1 | 0 |
+                                                              // | Advanced features | SOCD Global | Actuation mode global | 0 | 0 | 0 | 0 | 0 |
     struct socd_pair_0_t socd_pair_0;                         // SOCD пара 0
     struct socd_pair_1_t socd_pair_1;                         // SOCD пара 1
     struct socd_pair_2_t socd_pair_2;                         // SOCD пара 2
@@ -69,16 +88,20 @@ typedef struct {
     uint16_t floor_level_per_key[MATRIX_COLS][MATRIX_ROWS];     // Минимальное значение клавиши (В покое)
     uint16_t actuation_level_per_key[MATRIX_COLS][MATRIX_ROWS]; // Точка активации
     uint16_t release_level_per_key[MATRIX_COLS][MATRIX_ROWS];   // Точка деактивации
-    uint8_t  advanced_features_status_bits;                     // |         7         |      6      |       5       |       4       |       3       | 2 | 1 | 0 |
-                                                                // | Advanced features | SOCD Global | Pair 0 status | Pair 1 status | Pair 2 status | 0 | 0 | 0 |
+    uint8_t  advanced_features_status_bits;                     // |         7         |      6      |            5          | 4 | 3 | 2 | 1 | 0 |
+                                                                // | Advanced features | SOCD Global | Actuation mode global | 0 | 0 | 0 | 0 | 0 |
     struct socd_pair_0_t socd_pair_0;                           // SOCD пара 0
     struct socd_pair_1_t socd_pair_1;                           // SOCD пара 1
     struct socd_pair_2_t socd_pair_2;                           // SOCD пара 2
     uint8_t              socd_pair_current;
 
-    uint8_t key_0_previous_state;
-    uint8_t key_1_previous_state;
-    uint8_t key_wins;
+    uint8_t socd_pair_0_flags_bits;
+    uint8_t socd_pair_1_flags_bits;
+    uint8_t socd_pair_2_flags_bits;
+
+    uint8_t pair_0_key_0_previous_state;
+    uint8_t pair_0_key_1_previous_state;
+    uint8_t pair_0_key_winnner;
 
 // Битовые матрицы статуса калибровки
 #if (MATRIX_COLS <= 8)
@@ -88,17 +111,16 @@ typedef struct {
 #elif (MATRIX_COLS <= 32)
     uint32_t calibration_status_per_key_bits[MATRIX_ROWS];
 #else
-#    error "Проверь MATRIX_COLS"
+    #error "Проверь MATRIX_COLS"
 #endif
 } runtime_config_t;
 
 extern runtime_config_t runtime_config;
 
-
 uint16_t log_matrix[MATRIX_COLS][MATRIX_ROWS];
-void logger(void);
-void runtime_renew(void);
-void eeprom_reset(void);
-void save_to_eeprom(void);
-void socd_mapper(uint8_t col, uint8_t row);
-void socd_handler(matrix_row_t current_matrix[], uint8_t col, uint8_t row);
+void     logger(void);
+void     runtime_renew(void);
+void     eeprom_reset(void);
+void     save_to_eeprom(void);
+void     socd_mapper(uint8_t col, uint8_t row);
+void     socd_perform(matrix_row_t current_matrix[], uint8_t socd_key_0_current, uint8_t socd_key_1_current);
