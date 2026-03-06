@@ -30,14 +30,11 @@ void save_to_eeprom(void) {
 void runtime_renew(void) {
     runtime_config.kb_current_operation_mode = 0;
     runtime_config.socd_pair_current         = 0;
+    
     runtime_config.socd_pair_0_flags_bits    = 0;
     runtime_config.socd_pair_1_flags_bits    = 0;
     runtime_config.socd_pair_2_flags_bits    = 0;
-    // TEST BLOCK
-    runtime_config.pair_0_key_0_previous_state = 0;
-    runtime_config.pair_0_key_1_previous_state = 0;
-    runtime_config.pair_0_first_key            = 0;
-    // TEST BLOCK
+
     runtime_config.console_log_status            = eeprom_config.console_log_status;
     runtime_config.actuation_level_global        = eeprom_config.actuation_level_global;
     runtime_config.release_level_global          = eeprom_config.release_level_global;

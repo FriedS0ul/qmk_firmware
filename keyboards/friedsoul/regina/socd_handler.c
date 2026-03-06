@@ -2,27 +2,57 @@
 #include "eeprom_config.h"
 
 static bool socd_counter = 0;
-/*
-static void socd_mapper_helper(struct slot_t *slot, uint8_t col, uint8_t row) {
 
-    if (!socd_counter) {
-        slot->button_0_pos[0] = col;
-        slot->button_0_pos[1] = row;
-        socd_counter                               = 1;
-
-        return;
+// Возвращает статус глобального флага активности SOCD
+bool is_socd_on(void) {
+    if (((runtime_config.advanced_features_status_bits >> bits_advanced_features_global) & 1) && ((runtime_config.advanced_features_status_bits >> bits_socd_status_global) & 1)) {
+        return true;
     }
-
-    if (socd_counter && (slot->button_0_pos[0] != col || slot->button_0_pos[1] != row)) {
-        slot->button_1_pos[0] = col;
-        slot->button_1_pos[1] = row;
-        socd_counter                               = 0;
-        runtime_config.kb_current_operation_mode   = 0;
-
-        return;
-    }
+    return false;
 }
-*/
+
+// Возвращает статус конкретной SOCD пары
+bool is_socd_pair_on(socd_pair_t *pair) {
+    if (pair->pair_mode != 0) {
+        return true;
+    }
+    return false;
+}
+
+static inline uint8_t set_bit_to(uint8_t matrix, uint8_t bit, bool set_to) {
+    if (set_to) {
+        matrix |= (1 << bit);
+        return matrix;
+    }
+    matrix &= ~(1 << bit);
+    return matrix;
+}
+
+// Если клавиша по адресу входит в SOCD пару, обновляет ее биты raw состояния в runtime_config.socd_pair_X_flags_bits
+void socd_update_pair_raw(matrix_row_t current_matrix[], uint8_t col, uint8_t row, uint8_t socd_pairs_flags_bits, socd_pair_t *pair) {
+    if (!is_socd_pair_on(pair)) {
+        return;
+    }
+
+    if (col == pair->button_0_pos[0] && row == pair->button_0_pos[1]) {
+        if ((current_matrix[row] >> col) & 1) {
+            socd_pairs_flags_bits |= (1 << bits_key_0_raw);
+            return;
+        }
+        socd_pairs_flags_bits &= ~(1 << bits_key_0_raw);
+         return;
+    }
+
+    if (col == pair->button_1_pos[0] && row == pair->button_1_pos[1]) {
+        if ((current_matrix[row] >> col) & 1) {
+            socd_pairs_flags_bits |= (1 << bits_key_1_raw);
+            return;
+        }
+        socd_pairs_flags_bits &= ~(1 << bits_key_1_raw);
+         return;
+    }
+    return;
+}
 
 // Функция для записи SOCD пар. Записывает следующие две нажатые кнопки как SOCD пару в выбранные слот. (ПОТОМ ВЫНЕСТИ В ОТДЕЛЬНЫЙ SOCD_handler.c)
 void socd_mapper(uint8_t col, uint8_t row) {
@@ -95,50 +125,79 @@ void socd_mapper(uint8_t col, uint8_t row) {
     }
 }
 
-void socd_perform_new(matrix_row_t current_matrix[], uint8_t socd_keys_raw_states_bits) {
-    bool event_key_0_pressed;
-    bool event_key_1_pressed;
-
-    if (runtime_config.socd_pair_0.pair_mode != 0) {
-        event_key_0_pressed = (((runtime_config.socd_pair_0_flags_bits >> bits_key_0_previous_state) & 1) == 0 && ((socd_keys_raw_states_bits >> bits_slot_0_key_0) & 1) == 1);
-        event_key_1_pressed = (((runtime_config.socd_pair_0_flags_bits >> bits_key_1_previous_state) & 1) == 0 && ((socd_keys_raw_states_bits >> bits_slot_0_key_1) & 1) == 1);
-
-        if (event_key_0_pressed && ((socd_keys_raw_states_bits >> bits_slot_0_key_1) & 1) == 0) {
-            runtime_config.socd_pair_0_flags_bits &= ~(1 << bits_winner_key);
-        }
-
-        if (event_key_1_pressed && ((socd_keys_raw_states_bits >> bits_slot_0_key_0) & 1) == 0) {
-            runtime_config.socd_pair_0_flags_bits |= (1 << bits_winner_key);
-        }
-    }
-}
-
-void socd_perform(matrix_row_t current_matrix[], uint8_t socd_key_0_now, uint8_t socd_key_1_now) {
-    uint8_t event_pressed_key_0 = (runtime_config.pair_0_key_0_previous_state == 0 && socd_key_0_now == 1);
-    uint8_t event_pressed_key_1 = (runtime_config.pair_0_key_1_previous_state == 0 && socd_key_1_now == 1);
-
-    if (event_pressed_key_0 == 1 && socd_key_1_now == 0) {
-        runtime_config.pair_0_key_winnner = 0;
+uint8_t socd_perform_pair(matrix_row_t current_matrix[], socd_pair_t *pair, uint8_t socd_pairs_flags_bits) {
+    if (!is_socd_pair_on(pair)) {
+        return socd_pairs_flags_bits;
     }
 
-    if (event_pressed_key_1 == 1 && socd_key_0_now == 0) {
-        runtime_config.pair_0_key_winnner = 1;
+    bool event_key_0_pressed = ((socd_pairs_flags_bits >> bits_key_0_previous_state) & 1) == 0 && ((socd_pairs_flags_bits >> bits_key_0_raw) & 1) == 1;
+    bool event_key_1_pressed = ((socd_pairs_flags_bits >> bits_key_1_previous_state) & 1) == 0 && ((socd_pairs_flags_bits >> bits_key_1_raw) & 1) == 1;
+
+    if (event_key_0_pressed == 1 && event_key_1_pressed == 1){
+        socd_pairs_flags_bits &= ~(1 << bits_pressed_first); // 
+    }
+    
+
+    if (event_key_0_pressed && ((socd_pairs_flags_bits >> bits_key_1_raw) & 1) == 0) {
+        socd_pairs_flags_bits &= ~(1 << bits_pressed_first);
     }
 
-    if (socd_key_0_now == 1 && socd_key_1_now == 1) {
-        switch (runtime_config.pair_0_key_winnner) {
-            case 0:
-                // тут меняем матрицу в соответствии с режимом
+    if (event_key_1_pressed && ((socd_pairs_flags_bits >> bits_key_0_raw) & 1) == 0) {
+        socd_pairs_flags_bits |= (1 << bits_pressed_first);
+    }
+
+    if (!(((socd_pairs_flags_bits >> bits_key_0_raw) & 1) == 1 && ((socd_pairs_flags_bits >> bits_key_1_raw) & 1) == 1)) { // Если не зафиксировано нажатия обеих клавиш одновременно
+        socd_pairs_flags_bits = set_bit_to(socd_pairs_flags_bits, bits_key_0_previous_state, ((socd_pairs_flags_bits >> bits_key_0_raw) & 1));
+        socd_pairs_flags_bits = set_bit_to(socd_pairs_flags_bits, bits_key_1_previous_state, ((socd_pairs_flags_bits >> bits_key_1_raw) & 1));
+
+        return socd_pairs_flags_bits;
+    }
+
+    // KEY 0 WON
+    if (!((socd_pairs_flags_bits >> bits_pressed_first) & 1)) {
+        switch (pair->pair_mode) {
+            case 1: // LAST WINS
+                current_matrix[pair->button_0_pos[1]] &= ~(1 << pair->button_0_pos[0]);
+                current_matrix[pair->button_1_pos[1]] |= (1 << pair->button_1_pos[0]);
                 break;
-            case 1:
-                // тут меняем матрицу в соответствии с режимом
-                break;
-                ...
 
-                    default : break;
+            case 2: // NEUTRAL
+                current_matrix[pair->button_0_pos[1]] &= ~(1 << pair->button_0_pos[0]);
+                current_matrix[pair->button_1_pos[1]] &= ~(1 << pair->button_1_pos[0]);
+                break;
+
+            case 3: // FIRST WINS
+                current_matrix[pair->button_0_pos[1]] |= (1 << pair->button_0_pos[0]);
+                current_matrix[pair->button_1_pos[1]] &= ~(1 << pair->button_1_pos[0]);
+                break;
         }
+
+        socd_pairs_flags_bits = set_bit_to(socd_pairs_flags_bits, bits_key_0_previous_state, ((socd_pairs_flags_bits >> bits_key_0_raw) & 1));
+        socd_pairs_flags_bits = set_bit_to(socd_pairs_flags_bits, bits_key_1_previous_state, ((socd_pairs_flags_bits >> bits_key_1_raw) & 1));
+
+        return socd_pairs_flags_bits;
     }
 
-    runtime_config.pair_0_key_0_previous_state = socd_key_0_now;
-    runtime_config.pair_0_key_1_previous_state = socd_key_1_now;
+    // KEY 1 WON
+    switch (pair->pair_mode) {
+        case 1: // LAST WINS
+            current_matrix[pair->button_0_pos[1]] |= (1 << pair->button_0_pos[0]);
+            current_matrix[pair->button_1_pos[1]] &= ~(1 << pair->button_1_pos[0]);
+            break;
+
+        case 2: // NEUTRAL
+            current_matrix[pair->button_0_pos[1]] &= ~(1 << pair->button_0_pos[0]);
+            current_matrix[pair->button_1_pos[1]] &= ~(1 << pair->button_1_pos[0]);
+            break;
+
+        case 3: // FIRST WINS
+            current_matrix[pair->button_0_pos[1]] &= ~(1 << pair->button_0_pos[0]);
+            current_matrix[pair->button_1_pos[1]] |= (1 << pair->button_1_pos[0]);
+            break;
+    }
+
+    socd_pairs_flags_bits = set_bit_to(socd_pairs_flags_bits, bits_key_0_previous_state, ((socd_pairs_flags_bits >> bits_key_0_raw) & 1));
+    socd_pairs_flags_bits = set_bit_to(socd_pairs_flags_bits, bits_key_1_previous_state, ((socd_pairs_flags_bits >> bits_key_1_raw) & 1));
+
+    return socd_pairs_flags_bits;
 }

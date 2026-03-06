@@ -26,13 +26,6 @@ void pins_init(void) {
     }
 }
 
-static inline bool is_socd_on(void) {
-    if (((runtime_config.advanced_features_status_bits >> bits_advanced_features_global) & 1) && ((runtime_config.advanced_features_status_bits >> bits_socd_status_global) & 1)) {
-        return true;
-    }
-    return false;
-}
-
 // Зарядка ряда для сканирования
 void ec_sw_charge(uint8_t row) {
     gpio_write_pin_high(row_pins[row]);
@@ -96,12 +89,7 @@ void ec_floor_sample(void) {
 
 // Функция сканирования и обновления current matrix
 bool ec_matrix_scan(matrix_row_t current_matrix[]) {
-    bool    has_changed = false;
-
-    uint8_t socd_keys_raw_states_bits; // | Slot 2 key 0 | Slot 2 key 0 | 0 | Slot 1 key 1 | Slot 1 key 0 | 0 | Slot 0 key 1 | Slot 0 key 0
-
-    uint8_t socd_key_0_raw;
-    uint8_t socd_key_1_raw;
+    bool has_changed = false;
 
     for (uint8_t col = 0; col < MATRIX_COLS; col++) {
         for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
@@ -126,12 +114,13 @@ bool ec_matrix_scan(matrix_row_t current_matrix[]) {
                         has_changed = true;
                     }
 
-                    if ((col == runtime_config.socd_pair_0.button_0_pos[0]) && (row == runtime_config.socd_pair_0.button_0_pos[1])) {
-                        socd_key_0_raw = (current_matrix[row] >> col) & 1;
+                    if (!is_socd_on()) {
+                        break;
                     }
-                    if ((col == runtime_config.socd_pair_1.button_0_pos[0]) && (row == runtime_config.socd_pair_1.button_0_pos[1])) {
-                        socd_key_1_raw = (current_matrix[row] >> col) & 1;
-                    }
+
+                    socd_update_pair_raw(current_matrix, col, row, runtime_config.socd_pair_0_flags_bits, &runtime_config.socd_pair_0);
+                    socd_update_pair_raw(current_matrix, col, row, runtime_config.socd_pair_0_flags_bits, &runtime_config.socd_pair_1);
+                    socd_update_pair_raw(current_matrix, col, row, runtime_config.socd_pair_0_flags_bits, &runtime_config.socd_pair_2);
 
                     break;
 
@@ -170,7 +159,9 @@ bool ec_matrix_scan(matrix_row_t current_matrix[]) {
             }
         }
     }
-
+    runtime_config.socd_pair_0_flags_bits = socd_perform_pair(current_matrix, &runtime_config.socd_pair_0, runtime_config.socd_pair_0_flags_bits);
+    runtime_config.socd_pair_1_flags_bits = socd_perform_pair(current_matrix, &runtime_config.socd_pair_1, runtime_config.socd_pair_1_flags_bits);
+    runtime_config.socd_pair_2_flags_bits = socd_perform_pair(current_matrix, &runtime_config.socd_pair_2, runtime_config.socd_pair_2_flags_bits);
 
     return has_changed;
 }

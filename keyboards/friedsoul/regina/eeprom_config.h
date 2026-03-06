@@ -23,43 +23,20 @@ enum advanced_features_bit_ids {
 
 enum socd_pair_flags_bit_ids {
 
-    bits_winner_key           = 0,
-    bits_key_0_previous_state = 1,
-    bits_key_1_previous_state = 2
-
-};
-
-enum socd_keys_raw_states_bit_ids {
-
-    bits_slot_0_key_0 = 0,
-    bits_slot_0_key_1 = 1,
-
-    bits_slot_1_key_0 = 3,
-    bits_slot_1_key_1 = 4,
-
-    bits_slot_2_key_0 = 6,
-    bits_slot_2_key_1 = 7,
+    bits_key_0_raw            = 0,
+    bits_key_1_raw            = 1,
+    bits_pressed_first        = 2,
+    bits_key_0_previous_state = 3,
+    bits_key_1_previous_state = 4
 
 };
 
 // Структуры для записи адресов SOCD пар
-struct socd_pair_0_t {
+typedef struct {
     uint8_t button_0_pos[2]; // {col, row}
     uint8_t button_1_pos[2]; // {col, row}
     uint8_t pair_mode;       // 0 - OFF, 1 - Last wins, 2 - Neutral, 3 - First wins
-};
-
-struct socd_pair_1_t {
-    uint8_t button_0_pos[2]; // {col, row}
-    uint8_t button_1_pos[2]; // {col, row}
-    uint8_t pair_mode;       // 0 - OFF, 1 - Last wins, 2 - Neutral, 3 - First wins
-};
-
-struct socd_pair_2_t {
-    uint8_t button_0_pos[2]; // {col, row}
-    uint8_t button_1_pos[2]; // {col, row}
-    uint8_t pair_mode;       // 0 - OFF, 1 - Last wins, 2 - Neutral, 3 - First wins
-};
+} socd_pair_t;
 
 // Структура для записи/чтения данных из eeprom
 typedef struct {
@@ -70,9 +47,9 @@ typedef struct {
     uint16_t release_level_global;                            // Точка деактивации глобальная | 0 - 1023
     uint8_t  advanced_features_status_bits;                   // |         7         |      6      |            5          | 4 | 3 | 2 | 1 | 0 |
                                                               // | Advanced features | SOCD Global | Actuation mode global | 0 | 0 | 0 | 0 | 0 |
-    struct socd_pair_0_t socd_pair_0;                         // SOCD пара 0
-    struct socd_pair_1_t socd_pair_1;                         // SOCD пара 1
-    struct socd_pair_2_t socd_pair_2;                         // SOCD пара 2
+    socd_pair_t socd_pair_0;                                  // SOCD пара 0
+    socd_pair_t socd_pair_1;                                  // SOCD пара 1
+    socd_pair_t socd_pair_2;                                  // SOCD пара 2
 
 } eeprom_config_t;
 
@@ -90,18 +67,14 @@ typedef struct {
     uint16_t release_level_per_key[MATRIX_COLS][MATRIX_ROWS];   // Точка деактивации
     uint8_t  advanced_features_status_bits;                     // |         7         |      6      |            5          | 4 | 3 | 2 | 1 | 0 |
                                                                 // | Advanced features | SOCD Global | Actuation mode global | 0 | 0 | 0 | 0 | 0 |
-    struct socd_pair_0_t socd_pair_0;                           // SOCD пара 0
-    struct socd_pair_1_t socd_pair_1;                           // SOCD пара 1
-    struct socd_pair_2_t socd_pair_2;                           // SOCD пара 2
-    uint8_t              socd_pair_current;
+    socd_pair_t socd_pair_0;                                    // SOCD пара 0
+    socd_pair_t socd_pair_1;                                    // SOCD пара 1
+    socd_pair_t socd_pair_2;                                    // SOCD пара 2
+    uint8_t     socd_pair_current;
 
     uint8_t socd_pair_0_flags_bits;
     uint8_t socd_pair_1_flags_bits;
     uint8_t socd_pair_2_flags_bits;
-
-    uint8_t pair_0_key_0_previous_state;
-    uint8_t pair_0_key_1_previous_state;
-    uint8_t pair_0_key_winnner;
 
 // Битовые матрицы статуса калибровки
 #if (MATRIX_COLS <= 8)
@@ -111,16 +84,19 @@ typedef struct {
 #elif (MATRIX_COLS <= 32)
     uint32_t calibration_status_per_key_bits[MATRIX_ROWS];
 #else
-    #error "Проверь MATRIX_COLS"
+#    error "Проверь MATRIX_COLS"
 #endif
 } runtime_config_t;
 
 extern runtime_config_t runtime_config;
 
-uint16_t log_matrix[MATRIX_COLS][MATRIX_ROWS];
-void     logger(void);
-void     runtime_renew(void);
-void     eeprom_reset(void);
-void     save_to_eeprom(void);
-void     socd_mapper(uint8_t col, uint8_t row);
-void     socd_perform(matrix_row_t current_matrix[], uint8_t socd_key_0_current, uint8_t socd_key_1_current);
+uint16_t           log_matrix[MATRIX_COLS][MATRIX_ROWS];
+void               logger(void);
+void               runtime_renew(void);
+void               eeprom_reset(void);
+void               save_to_eeprom(void);
+void               socd_mapper(uint8_t col, uint8_t row);
+bool is_socd_on(void);
+bool is_socd_pair_on(socd_pair_t *pair);
+void socd_update_pair_raw(matrix_row_t current_matrix[], uint8_t col, uint8_t row, uint8_t socd_pairs_flags_bits, socd_pair_t *pair);
+uint8_t     socd_perform_pair(matrix_row_t current_matrix[], socd_pair_t *pair, uint8_t socd_pairs_flags_bits);
