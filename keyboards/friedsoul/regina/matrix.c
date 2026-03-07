@@ -107,20 +107,20 @@ bool ec_matrix_scan(matrix_row_t current_matrix[]) {
                     if (raw_adc_readings > runtime_config.actuation_level_per_key[col][row] && key_previous_state == 0) {
                         current_matrix[row] |= (1 << col); // Нажимаем
                         has_changed = true;
+
+                        runtime_config.socd_pair_0_flags_bits = socd_update_pair_raw(current_matrix, col, row, runtime_config.socd_pair_0_flags_bits, &runtime_config.socd_pair_0);
+                        runtime_config.socd_pair_1_flags_bits = socd_update_pair_raw(current_matrix, col, row, runtime_config.socd_pair_1_flags_bits, &runtime_config.socd_pair_1);
+                        runtime_config.socd_pair_2_flags_bits = socd_update_pair_raw(current_matrix, col, row, runtime_config.socd_pair_2_flags_bits, &runtime_config.socd_pair_2);
                     }
 
                     if (raw_adc_readings < runtime_config.release_level_per_key[col][row] && key_previous_state == 1) {
                         current_matrix[row] &= ~(1 << col); // Отпускаем
                         has_changed = true;
-                    }
 
-                    if (!is_socd_on()) {
-                        break;
+                        runtime_config.socd_pair_0_flags_bits = socd_update_pair_raw(current_matrix, col, row, runtime_config.socd_pair_0_flags_bits, &runtime_config.socd_pair_0);
+                        runtime_config.socd_pair_1_flags_bits = socd_update_pair_raw(current_matrix, col, row, runtime_config.socd_pair_1_flags_bits, &runtime_config.socd_pair_1);
+                        runtime_config.socd_pair_2_flags_bits = socd_update_pair_raw(current_matrix, col, row, runtime_config.socd_pair_2_flags_bits, &runtime_config.socd_pair_2);
                     }
-
-                    socd_update_pair_raw(current_matrix, col, row, runtime_config.socd_pair_0_flags_bits, &runtime_config.socd_pair_0);
-                    socd_update_pair_raw(current_matrix, col, row, runtime_config.socd_pair_0_flags_bits, &runtime_config.socd_pair_1);
-                    socd_update_pair_raw(current_matrix, col, row, runtime_config.socd_pair_0_flags_bits, &runtime_config.socd_pair_2);
 
                     break;
 

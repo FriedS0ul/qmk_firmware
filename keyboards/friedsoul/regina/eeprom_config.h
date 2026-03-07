@@ -90,13 +90,13 @@ typedef struct {
 
 extern runtime_config_t runtime_config;
 
-uint16_t           log_matrix[MATRIX_COLS][MATRIX_ROWS];
-void               logger(void);
-void               runtime_renew(void);
-void               eeprom_reset(void);
-void               save_to_eeprom(void);
-void               socd_mapper(uint8_t col, uint8_t row);
-bool is_socd_on(void);
-bool is_socd_pair_on(socd_pair_t *pair);
-void socd_update_pair_raw(matrix_row_t current_matrix[], uint8_t col, uint8_t row, uint8_t socd_pairs_flags_bits, socd_pair_t *pair);
-uint8_t     socd_perform_pair(matrix_row_t current_matrix[], socd_pair_t *pair, uint8_t socd_pairs_flags_bits);
+uint16_t log_matrix[MATRIX_COLS][MATRIX_ROWS];
+void     logger(void);
+void     runtime_renew(void);
+void     eeprom_reset(void);
+void     save_to_eeprom(void);
+void     socd_mapper(uint8_t col, uint8_t row);
+bool     is_socd_on(void);
+bool     is_socd_pair_on(socd_pair_t *pair);
+uint8_t  socd_update_pair_raw(matrix_row_t current_matrix[], uint8_t col, uint8_t row, uint8_t socd_pairs_flags_bits, socd_pair_t *pair);
+uint8_t  socd_perform_pair(matrix_row_t current_matrix[], socd_pair_t *pair, uint8_t socd_pairs_flags_bits);
