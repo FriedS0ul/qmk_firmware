@@ -23,11 +23,12 @@ enum advanced_features_bit_ids {
 
 enum socd_pair_flags_bit_ids {
 
-    bits_key_0_raw            = 0,
-    bits_key_1_raw            = 1,
+    bits_key_0_current_state  = 0,
+    bits_key_1_current_state  = 1,
     bits_pressed_first        = 2,
     bits_key_0_previous_state = 3,
-    bits_key_1_previous_state = 4
+    bits_key_1_previous_state = 4,
+    bits_marker               = 5
 
 };
 
@@ -75,6 +76,12 @@ typedef struct {
     uint8_t socd_pair_0_flags_bits;
     uint8_t socd_pair_1_flags_bits;
     uint8_t socd_pair_2_flags_bits;
+
+    bool key_0_prev;
+    bool key_1_prev;
+    bool key_pressed_first;
+    bool key_0_current;
+    bool key_1_current;
 
 // Битовые матрицы статуса калибровки
 #if (MATRIX_COLS <= 8)
