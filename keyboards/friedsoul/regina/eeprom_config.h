@@ -26,9 +26,8 @@ enum socd_pair_flags_bit_ids {
     bits_key_0_current_state  = 0,
     bits_key_1_current_state  = 1,
     bits_pressed_first        = 2,
-    bits_key_0_previous_state = 3,
-    bits_key_1_previous_state = 4,
-    bits_marker               = 5
+
+    bits_marker               = 7 // Маркер для bits_pressed_first, изменяется на 1 при первом его изменении
 
 };
 

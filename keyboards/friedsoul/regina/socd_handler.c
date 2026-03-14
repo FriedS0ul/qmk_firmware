@@ -87,25 +87,39 @@ inline uint8_t socd_update_pair_raw(matrix_row_t current_matrix[], uint8_t col, 
 
     if (col == pair->button_0_pos[0] && row == pair->button_0_pos[1]) {
         if ((current_matrix[row] >> col) & 1) {
-            socd_pairs_flags_bits |= (1 << bits_key_0_current_state); 
+            socd_pairs_flags_bits |= (1 << bits_key_0_current_state);
             return socd_pairs_flags_bits;
         }
-        socd_pairs_flags_bits &= ~(1 << bits_key_0_current_state); 
+        socd_pairs_flags_bits &= ~(1 << bits_key_0_current_state);
         return socd_pairs_flags_bits;
     }
 
     if (col == pair->button_1_pos[0] && row == pair->button_1_pos[1]) {
         if ((current_matrix[row] >> col) & 1) {
-            socd_pairs_flags_bits |= (1 << bits_key_1_current_state); 
+            socd_pairs_flags_bits |= (1 << bits_key_1_current_state);
             return socd_pairs_flags_bits;
         }
-        socd_pairs_flags_bits &= ~(1 << bits_key_1_current_state); 
+        socd_pairs_flags_bits &= ~(1 << bits_key_1_current_state);
         return socd_pairs_flags_bits;
     }
     return socd_pairs_flags_bits;
 }
 
 uint8_t socd_perform_pair(matrix_row_t current_matrix[], socd_pair_t *pair, uint8_t socd_pairs_flags_bits) {
+    /*
+    LAST WINS:
+    Если нажата только одна клавиша — выводится она
+
+    Если обе противоположные клавиши удерживаются одновременно,
+    активным считается направление последней нажатой клавиши.
+
+    Пока обе клавиши продолжают удерживаться, выход не меняется.
+
+    Если одна из двух клавиш отпущена, активным становится направление
+    той клавиши, которая осталась удерживаться.
+
+    Держим в уме, что один тап по клавиши это 3-5 полных сканирований матрицы
+    */
     if (!is_socd_on()) {
         return socd_pairs_flags_bits;
     }
