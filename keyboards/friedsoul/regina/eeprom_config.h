@@ -25,7 +25,7 @@ enum socd_pair_flags_bit_ids {
 
     bits_key_0_current_state  = 0,
     bits_key_1_current_state  = 1,
-    bits_pressed_first        = 2,
+    bits_held_last        = 2,
 
     bits_marker               = 7 // Маркер для bits_pressed_first, изменяется на 1 при первом его изменении
 
@@ -105,4 +105,4 @@ void     socd_mapper(uint8_t col, uint8_t row);
 bool     is_socd_on(void);
 bool     is_socd_pair_on(socd_pair_t *pair);
 uint8_t  socd_update_pair_raw(matrix_row_t current_matrix[], uint8_t col, uint8_t row, uint8_t socd_pairs_flags_bits, socd_pair_t *pair);
-uint8_t  socd_perform_pair(matrix_row_t current_matrix[], socd_pair_t *pair, uint8_t socd_pairs_flags_bits);
+void  socd_perform_pair(matrix_row_t current_matrix[], socd_pair_t *pair, uint8_t socd_pairs_flags_bits);

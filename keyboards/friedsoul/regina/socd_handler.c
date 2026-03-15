@@ -84,10 +84,16 @@ inline uint8_t socd_update_pair_raw(matrix_row_t current_matrix[], uint8_t col, 
     if (!is_socd_pair_on(pair)) {
         return socd_pairs_flags_bits;
     }
+    // ВОЗМОЖНО СТОИТ ХРАНИТЬ ТОЛЬКО ФИЗИЧЕСКОЕ СОСТОЯНИЕ КЛАВИШИ, А НЕ ЛОГИЧЕСКОЕ
+    bool prev_0 = (socd_pairs_flags_bits >> bits_key_0_current_state) & 1;
+    bool prev_1 = (socd_pairs_flags_bits >> bits_key_1_current_state) & 1;
 
     if (col == pair->button_0_pos[0] && row == pair->button_0_pos[1]) {
         if ((current_matrix[row] >> col) & 1) {
             socd_pairs_flags_bits |= (1 << bits_key_0_current_state);
+            if (prev_0){
+                socd_pairs_flags_bits &= ~(1 >> bits_held_last);
+            }
             return socd_pairs_flags_bits;
         }
         socd_pairs_flags_bits &= ~(1 << bits_key_0_current_state);
@@ -97,6 +103,9 @@ inline uint8_t socd_update_pair_raw(matrix_row_t current_matrix[], uint8_t col, 
     if (col == pair->button_1_pos[0] && row == pair->button_1_pos[1]) {
         if ((current_matrix[row] >> col) & 1) {
             socd_pairs_flags_bits |= (1 << bits_key_1_current_state);
+            if (prev_1){
+                socd_pairs_flags_bits |= (1 >> bits_held_last);
+            }
             return socd_pairs_flags_bits;
         }
         socd_pairs_flags_bits &= ~(1 << bits_key_1_current_state);
@@ -105,7 +114,7 @@ inline uint8_t socd_update_pair_raw(matrix_row_t current_matrix[], uint8_t col, 
     return socd_pairs_flags_bits;
 }
 
-uint8_t socd_perform_pair(matrix_row_t current_matrix[], socd_pair_t *pair, uint8_t socd_pairs_flags_bits) {
+void socd_perform_pair(matrix_row_t current_matrix[], socd_pair_t *pair, uint8_t socd_pairs_flags_bits) {
     /*
     LAST WINS:
     Если нажата только одна клавиша — выводится она
@@ -118,15 +127,32 @@ uint8_t socd_perform_pair(matrix_row_t current_matrix[], socd_pair_t *pair, uint
     Если одна из двух клавиш отпущена, активным становится направление
     той клавиши, которая осталась удерживаться.
 
-    Держим в уме, что один тап по клавиши это 3-5 полных сканирований матрицы
+    Держим в уме, что один тап по клавише это 3-5 полных сканирований матрицы
     */
     if (!is_socd_on()) {
-        return socd_pairs_flags_bits;
+        return;
     }
 
     if (!is_socd_pair_on(pair)) {
-        return socd_pairs_flags_bits;
+        return;
     }
 
-    return socd_pairs_flags_bits;
+
+    bool key_0 = (socd_pairs_flags_bits >> bits_key_0_current_state) & 1;
+    bool key_1 = (socd_pairs_flags_bits >> bits_key_1_current_state) & 1;
+    bool held_last = (socd_pairs_flags_bits >> bits_held_last) & 1;
+
+    if (!(key_0 && key_1)){
+        return;
+    }
+
+    uprintf("Held  last %d\n", (socd_pairs_flags_bits >> bits_held_last) & 1);
+    if (held_last){ // held_last == 1
+        current_matrix[pair->button_0_pos[1]] &= ~(1 >> pair->button_0_pos[0]);
+    }
+
+    current_matrix[pair->button_1_pos[1]] &= ~(1 >> pair->button_1_pos[0]);
+    
+
+    return;
 }
