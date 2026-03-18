@@ -114,10 +114,6 @@ bool ec_matrix_scan(matrix_row_t current_matrix[]) {
                         has_changed = true;
                     }
 
-                    runtime_config.socd_pair_0_flags_bits = socd_update_pair_raw(current_matrix, col, row, runtime_config.socd_pair_0_flags_bits, &runtime_config.socd_pair_0);
-                    //runtime_config.socd_pair_1_flags_bits = socd_update_pair_raw(current_matrix, col, row, runtime_config.socd_pair_1_flags_bits, &runtime_config.socd_pair_1);
-                    //runtime_config.socd_pair_2_flags_bits = socd_update_pair_raw(current_matrix, col, row, runtime_config.socd_pair_2_flags_bits, &runtime_config.socd_pair_2);
-
                     break;
 
                 // Калибровка порогов
@@ -145,9 +141,7 @@ bool ec_matrix_scan(matrix_row_t current_matrix[]) {
                     if (raw_adc_readings < runtime_config.actuation_level_per_key[col][row]) {
                         break;
                     }
-
                     socd_mapper(col, row);
-
                     break;
 
                 default:
@@ -156,6 +150,8 @@ bool ec_matrix_scan(matrix_row_t current_matrix[]) {
         }
     }
     socd_perform_pair(current_matrix, &runtime_config.socd_pair_0, runtime_config.socd_pair_0_flags_bits);
+    //socd_perform_pair(current_matrix, &runtime_config.socd_pair_1, runtime_config.socd_pair_1_flags_bits);
+    //socd_perform_pair(current_matrix, &runtime_config.socd_pair_2, runtime_config.socd_pair_2_flags_bits);
 
     return has_changed;
 }

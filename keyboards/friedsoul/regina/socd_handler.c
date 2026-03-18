@@ -66,15 +66,6 @@ void socd_mapper(uint8_t col, uint8_t row) {
     }
 }
 
-/*
-bits_key_0_current_state  = 0,
-bits_key_1_current_state  = 1,
-bits_pressed_first        = 2,
-bits_key_0_previous_state = 3,
-bits_key_1_previous_state = 4,
-bits_marker               = 5
-*/
-
 // Если клавиша по адресу входит в SOCD пару, обновляет ее биты raw состояния в runtime_config.socd_pair_X_flags_bits
 inline uint8_t socd_update_pair_raw(matrix_row_t current_matrix[], uint8_t col, uint8_t row, uint8_t socd_pairs_flags_bits, socd_pair_t *pair) {
     if (!is_socd_on()) {
@@ -84,35 +75,36 @@ inline uint8_t socd_update_pair_raw(matrix_row_t current_matrix[], uint8_t col, 
     if (!is_socd_pair_on(pair)) {
         return socd_pairs_flags_bits;
     }
-    // ВОЗМОЖНО СТОИТ ХРАНИТЬ ТОЛЬКО ФИЗИЧЕСКОЕ СОСТОЯНИЕ КЛАВИШИ, А НЕ ЛОГИЧЕСКОЕ
-    bool prev_0 = (socd_pairs_flags_bits >> bits_key_0_current_state) & 1;
-    bool prev_1 = (socd_pairs_flags_bits >> bits_key_1_current_state) & 1;
 
     if (col == pair->button_0_pos[0] && row == pair->button_0_pos[1]) {
         if ((current_matrix[row] >> col) & 1) {
-            socd_pairs_flags_bits |= (1 << bits_key_0_current_state);
-            if (prev_0){
-                socd_pairs_flags_bits &= ~(1 >> bits_held_last);
-            }
+            socd_pairs_flags_bits |= (1 << bits_key_0_after_socd);
             return socd_pairs_flags_bits;
         }
-        socd_pairs_flags_bits &= ~(1 << bits_key_0_current_state);
+        socd_pairs_flags_bits &= ~(1 << bits_key_0_after_socd);
         return socd_pairs_flags_bits;
     }
 
     if (col == pair->button_1_pos[0] && row == pair->button_1_pos[1]) {
         if ((current_matrix[row] >> col) & 1) {
-            socd_pairs_flags_bits |= (1 << bits_key_1_current_state);
-            if (prev_1){
-                socd_pairs_flags_bits |= (1 >> bits_held_last);
-            }
+            socd_pairs_flags_bits |= (1 << bits_key_1_after_socd);
             return socd_pairs_flags_bits;
         }
-        socd_pairs_flags_bits &= ~(1 << bits_key_1_current_state);
+        socd_pairs_flags_bits &= ~(1 << bits_key_1_after_socd);
         return socd_pairs_flags_bits;
     }
     return socd_pairs_flags_bits;
 }
+
+/*
+    bits_key_0_after_socd  = 0,
+    bits_key_1_after_socd  = 1,
+    bits_pressed_last      = 2,
+    bits_key_0_before_socd = 3,
+    bits_key_1_before_socd = 4,
+
+    bits_marker = 7
+*/
 
 void socd_perform_pair(matrix_row_t current_matrix[], socd_pair_t *pair, uint8_t socd_pairs_flags_bits) {
     /*
@@ -137,22 +129,90 @@ void socd_perform_pair(matrix_row_t current_matrix[], socd_pair_t *pair, uint8_t
         return;
     }
 
+    bool key_0 = (current_matrix[pair->button_0_pos[1]] >> pair->button_0_pos[0]) & 1;
+    bool key_1 = (current_matrix[pair->button_1_pos[1]] >> pair->button_1_pos[0]) & 1;
 
-    bool key_0 = (socd_pairs_flags_bits >> bits_key_0_current_state) & 1;
-    bool key_1 = (socd_pairs_flags_bits >> bits_key_1_current_state) & 1;
-    bool held_last = (socd_pairs_flags_bits >> bits_held_last) & 1;
+    bool key_0_is_pressed = key_0 && !((socd_pairs_flags_bits >> bits_key_0_before_socd) & 1);
+    bool key_1_is_pressed = key_1 && !((socd_pairs_flags_bits >> bits_key_1_before_socd) & 1);
 
-    if (!(key_0 && key_1)){
+    bool key_0_is_released = !key_0 && ((socd_pairs_flags_bits >> bits_key_0_before_socd) & 1);
+    bool key_1_is_released = !key_1 && ((socd_pairs_flags_bits >> bits_key_1_before_socd) & 1);
+
+    bool key_0_is_held = key_0 && ((socd_pairs_flags_bits >> bits_key_0_before_socd) & 1);
+    bool key_1_is_held = key_1 && ((socd_pairs_flags_bits >> bits_key_1_before_socd) & 1);
+
+    bool pressed_last = 0;
+
+    if (key_0_is_pressed && key_1_is_pressed) {
+        uprintf("\r\n");
+        uprintf("Both keys pressed at the same time, default one is %d", DEFAULT_SOCD_KEY);
+        uprintf("\r\n");
+        pressed_last = DEFAULT_SOCD_KEY;
+    }
+
+    if (key_0_is_pressed) {
+        pressed_last = 0;
+    }
+
+    if (key_1_is_pressed) {
+        pressed_last = 1;
+    }
+
+    if (key_0_is_released && key_1_is_held) {
+        key_1_is_pressed = 1;
+    }
+
+    if (key_1_is_released && key_0_is_held) {
+        key_0_is_pressed = 1;
+    }
+
+    set_bit_to(socd_pairs_flags_bits, bits_key_0_before_socd, key_0); // Ставим before_socd = текущее состояние
+    set_bit_to(socd_pairs_flags_bits, bits_key_1_before_socd, key_1); // Ставим before_socd = текущее состояние
+    set_bit_to(socd_pairs_flags_bits, bits_pressed_last, pressed_last);
+
+    if (!(key_0 && key_1)) {
         return;
     }
 
-    uprintf("Held  last %d\n", (socd_pairs_flags_bits >> bits_held_last) & 1);
-    if (held_last){ // held_last == 1
-        current_matrix[pair->button_0_pos[1]] &= ~(1 >> pair->button_0_pos[0]);
+    // pressed_last == 0
+    if (!pressed_last) {
+        switch (pair->pair_mode) {
+            case 1: // Last wins
+
+                current_matrix[pair->button_1_pos[1]] &= ~(1 << pair->button_1_pos[0]);
+                break;
+
+            case 2: // Neutral
+
+                current_matrix[pair->button_0_pos[1]] &= ~(1 << pair->button_0_pos[0]);
+                current_matrix[pair->button_1_pos[1]] &= ~(1 << pair->button_1_pos[0]);
+                break;
+
+            case 3: // First wins
+
+                current_matrix[pair->button_0_pos[1]] &= ~(1 << pair->button_0_pos[0]);
+                break;
+        }
+        return;
     }
 
-    current_matrix[pair->button_1_pos[1]] &= ~(1 >> pair->button_1_pos[0]);
-    
+    // pressed_last == 1
+    switch (pair->pair_mode) {
+        case 1: // Last wins
 
+            current_matrix[pair->button_0_pos[1]] &= ~(1 << pair->button_0_pos[0]);
+            break;
+
+        case 2: // Neutral
+
+            current_matrix[pair->button_0_pos[1]] &= ~(1 << pair->button_0_pos[0]);
+            current_matrix[pair->button_1_pos[1]] &= ~(1 << pair->button_1_pos[0]);
+            break;
+
+        case 3: // First wins
+
+            current_matrix[pair->button_1_pos[1]] &= ~(1 << pair->button_1_pos[0]);
+            break;
+    }
     return;
 }

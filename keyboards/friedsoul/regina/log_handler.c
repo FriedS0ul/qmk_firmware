@@ -64,19 +64,7 @@ void logger(void) {
 
                 case 5:
                     uprintf("\r\n");
-                    /*
-                    uprintf("PAIR 0:\n");
-                    uprintf("0 Prev: %d, Now: %d\n", ((runtime_config.socd_pair_0_flags_bits >> bits_key_0_previous_state) & 1), ((runtime_config.socd_pair_0_flags_bits >> bits_key_0_current_state) & 1) );
-                    uprintf("1 Prev: %d, Now: %d\n", ((runtime_config.socd_pair_0_flags_bits >> bits_key_1_previous_state) & 1), ((runtime_config.socd_pair_0_flags_bits >> bits_key_1_previous_state) & 1) );
-                    uprintf("PAIR 1\n");
-                    uprintf("0 Prev: %d, Now: %d\n", ((runtime_config.socd_pair_1_flags_bits >> bits_key_0_previous_state) & 1), ((runtime_config.socd_pair_1_flags_bits >> bits_key_0_current_state) & 1) );
-                    uprintf("1 Prev: %d, Now: %d\n", ((runtime_config.socd_pair_1_flags_bits >> bits_key_1_previous_state) & 1), ((runtime_config.socd_pair_1_flags_bits >> bits_key_1_previous_state) & 1) );
-                    uprintf("PAIR 2\n");
-                    uprintf("0 Prev: %d, Now: %d\n", ((runtime_config.socd_pair_2_flags_bits >> bits_key_0_previous_state) & 1), ((runtime_config.socd_pair_2_flags_bits >> bits_key_0_current_state) & 1) );
-                    uprintf("1 Prev: %d, Now: %d\n", ((runtime_config.socd_pair_2_flags_bits >> bits_key_1_previous_state) & 1), ((runtime_config.socd_pair_2_flags_bits >> bits_key_1_previous_state) & 1) );
-
-                    */
-                    uprintf("PAIR 0: %d\n", runtime_config.socd_pair_0_flags_bits);
+                    uprintf("PAIR 0: %d\n", (runtime_config.socd_pair_0_flags_bits >> bits_pressed_last) & 1);
                     break;
 
                 default:
