@@ -63,8 +63,8 @@ void logger(void) {
                     break;
 
                 case 5:
-                    uprintf("\r\n");
-                    uprintf("PAIR 0: %d\n", (runtime_config.socd_pair_0_flags_bits >> bits_pressed_last) & 1);
+
+                    uprintf("PAIR 0 last pressed: %d\n", (runtime_config.socd_pair_0_flags_bits >> bits_pressed_last) & 1);
                     break;
 
                 default:

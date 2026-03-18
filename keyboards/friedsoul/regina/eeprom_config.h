@@ -23,11 +23,12 @@ enum advanced_features_bit_ids {
 
 enum socd_pair_flags_bit_ids {
 
-    bits_key_0_after_socd  = 0,
-    bits_key_1_after_socd  = 1,
-    bits_pressed_last      = 2,
-    bits_key_0_before_socd = 3,
-    bits_key_1_before_socd = 4,
+    bits_key_0_after_socd  = 5,
+    bits_key_1_after_socd  = 6,
+
+    bits_pressed_last      = 0,
+    bits_key_0_before_socd = 1,
+    bits_key_1_before_socd = 2,
 
     bits_marker = 7
 
@@ -78,12 +79,6 @@ typedef struct {
     uint8_t socd_pair_1_flags_bits;
     uint8_t socd_pair_2_flags_bits;
 
-    bool key_0_prev;
-    bool key_1_prev;
-    bool key_pressed_first;
-    bool key_0_current;
-    bool key_1_current;
-
 // Битовые матрицы статуса калибровки
 #if (MATRIX_COLS <= 8)
     uint8_t calibration_status_per_key_bits[MATRIX_ROWS];
@@ -107,4 +102,4 @@ void     socd_mapper(uint8_t col, uint8_t row);
 bool     is_socd_on(void);
 bool     is_socd_pair_on(socd_pair_t *pair);
 uint8_t  socd_update_pair_raw(matrix_row_t current_matrix[], uint8_t col, uint8_t row, uint8_t socd_pairs_flags_bits, socd_pair_t *pair);
-void     socd_perform_pair(matrix_row_t current_matrix[], socd_pair_t *pair, uint8_t socd_pairs_flags_bits);
+uint8_t  socd_perform_pair(matrix_row_t current_matrix[], socd_pair_t *pair, uint8_t socd_pairs_flags_bits);

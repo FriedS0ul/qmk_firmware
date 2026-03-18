@@ -96,17 +96,7 @@ inline uint8_t socd_update_pair_raw(matrix_row_t current_matrix[], uint8_t col, 
     return socd_pairs_flags_bits;
 }
 
-/*
-    bits_key_0_after_socd  = 0,
-    bits_key_1_after_socd  = 1,
-    bits_pressed_last      = 2,
-    bits_key_0_before_socd = 3,
-    bits_key_1_before_socd = 4,
-
-    bits_marker = 7
-*/
-
-void socd_perform_pair(matrix_row_t current_matrix[], socd_pair_t *pair, uint8_t socd_pairs_flags_bits) {
+uint8_t socd_perform_pair(matrix_row_t current_matrix[], socd_pair_t *pair, uint8_t socd_pairs_flags_bits) {
     /*
     LAST WINS:
     Если нажата только одна клавиша — выводится она
@@ -122,11 +112,11 @@ void socd_perform_pair(matrix_row_t current_matrix[], socd_pair_t *pair, uint8_t
     Держим в уме, что один тап по клавише это 3-5 полных сканирований матрицы
     */
     if (!is_socd_on()) {
-        return;
+        return socd_pairs_flags_bits;
     }
 
     if (!is_socd_pair_on(pair)) {
-        return;
+        return socd_pairs_flags_bits;
     }
 
     bool key_0 = (current_matrix[pair->button_0_pos[1]] >> pair->button_0_pos[0]) & 1;
@@ -159,19 +149,21 @@ void socd_perform_pair(matrix_row_t current_matrix[], socd_pair_t *pair, uint8_t
     }
 
     if (key_0_is_released && key_1_is_held) {
-        key_1_is_pressed = 1;
+        pressed_last = 1;
     }
 
     if (key_1_is_released && key_0_is_held) {
-        key_0_is_pressed = 1;
+        pressed_last = 0;
     }
 
-    set_bit_to(socd_pairs_flags_bits, bits_key_0_before_socd, key_0); // Ставим before_socd = текущее состояние
-    set_bit_to(socd_pairs_flags_bits, bits_key_1_before_socd, key_1); // Ставим before_socd = текущее состояние
-    set_bit_to(socd_pairs_flags_bits, bits_pressed_last, pressed_last);
+    socd_pairs_flags_bits = set_bit_to(socd_pairs_flags_bits, bits_key_0_before_socd, key_0);
+    socd_pairs_flags_bits = set_bit_to(socd_pairs_flags_bits, bits_key_1_before_socd, key_1);
+    socd_pairs_flags_bits = set_bit_to(socd_pairs_flags_bits, bits_pressed_last, pressed_last);
+    
+    uprintf("socd_pairs_flags_bits: %d\n", socd_pairs_flags_bits);
 
     if (!(key_0 && key_1)) {
-        return;
+        return socd_pairs_flags_bits;
     }
 
     // pressed_last == 0
@@ -193,7 +185,7 @@ void socd_perform_pair(matrix_row_t current_matrix[], socd_pair_t *pair, uint8_t
                 current_matrix[pair->button_0_pos[1]] &= ~(1 << pair->button_0_pos[0]);
                 break;
         }
-        return;
+        return socd_pairs_flags_bits;
     }
 
     // pressed_last == 1
@@ -214,5 +206,6 @@ void socd_perform_pair(matrix_row_t current_matrix[], socd_pair_t *pair, uint8_t
             current_matrix[pair->button_1_pos[1]] &= ~(1 << pair->button_1_pos[0]);
             break;
     }
-    return;
+
+    return socd_pairs_flags_bits;
 }
