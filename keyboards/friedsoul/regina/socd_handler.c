@@ -137,15 +137,15 @@ uint8_t socd_perform_pair(matrix_row_t current_matrix[], socd_pair_t *pair, uint
         uprintf("\r\n");
         uprintf("Both keys pressed at the same time, default one is %d", DEFAULT_SOCD_KEY);
         uprintf("\r\n");
-        pressed_last = DEFAULT_SOCD_KEY;
-    }
+        // pressed_last = DEFAULT_SOCD_KEY;
 
-    if (key_0_is_pressed) {
+    } else if (key_0_is_pressed) {
         pressed_last = 0;
-    }
+        uprintf("pressed_last: %d\n", pressed_last);
 
-    if (key_1_is_pressed) {
+    } else if (key_1_is_pressed) {
         pressed_last = 1;
+        uprintf("pressed_last: %d\n", pressed_last);
     }
 
     if (key_0_is_released && key_1_is_held) {
@@ -159,8 +159,8 @@ uint8_t socd_perform_pair(matrix_row_t current_matrix[], socd_pair_t *pair, uint
     socd_pairs_flags_bits = set_bit_to(socd_pairs_flags_bits, bits_key_0_before_socd, key_0);
     socd_pairs_flags_bits = set_bit_to(socd_pairs_flags_bits, bits_key_1_before_socd, key_1);
     socd_pairs_flags_bits = set_bit_to(socd_pairs_flags_bits, bits_pressed_last, pressed_last);
-    
-    uprintf("socd_pairs_flags_bits: %d\n", socd_pairs_flags_bits);
+
+    // uprintf("socd_pairs_flags_bits: %d\n", socd_pairs_flags_bits);
 
     if (!(key_0 && key_1)) {
         return socd_pairs_flags_bits;
