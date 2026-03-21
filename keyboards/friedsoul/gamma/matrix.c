@@ -5,23 +5,51 @@
 #include "gpio.h"
 #include "analog.h"
 #include <print.h>
+#include "eeprom_config.h"
 
-static const pin_t row_pins[] = MATRIX_ROW_PINS;
+static const pin_t   row_pins[]                                        = MATRIX_ROW_PINS;
+static const pin_t   mux_en_pins[]                                     = MUX_EN_PINS;
+static const pin_t   mux_sel_pins[]                                    = MUX_SEL_PINS;
+static const uint8_t mux_logical_channels[MUX_COUNT][MUX_MAX_CAPACITY] = MUX_LOGICAL_CHANNELS;
+static const uint8_t mux_current_capacity[MUX_COUNT]                   = MUX_CURRENT_CAPACITY;
+
+#ifdef UNUSED_ADRESSES
+static const uint8_t matrix_unused_adresses[][2] = UNUSED_ADRESSES;
+static inline bool   matrix_address_unused(uint8_t col_matrixm, uint8_t row) {
+    for (uint8_t i = 0; i < (sizeof(matrix_unused_adresses[][]) / sizeof(matrix_unused_adresses[0][0])); i++) {
+        if (matrix_unused_adresses[i][0] == col_matrix && matrix_unused_adresses[i][1] == row) {
+            return true;
+        }
+    }
+    return false;
+}
+#endif
 
 eeprom_config_t  eeprom_config;
 runtime_config_t runtime_config;
 
-void adc_int(void) {
+static inline void adc_int(void) {
     palSetLineMode(ANALOG_READINGS_INPUT, PAL_MODE_INPUT_ANALOG);
 }
 
-void pins_init(void) {
+static inline void pins_init(void) {
     gpio_write_pin_low(DISCHARGE_PIN);
     gpio_set_pin_output(DISCHARGE_PIN);
 
-    for (uint8_t i = 0; i < MATRIX_ROWS; i++) {
-        gpio_write_pin_low(row_pins[i]);
-        gpio_set_pin_output(row_pins[i]);
+    for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
+        gpio_write_pin_low(row_pins[row]);
+        gpio_set_pin_output(row_pins[row]);
+    }
+}
+// Ставим
+static inline void mux_init(void) {
+    for (uint8_t pin = 0; pin < (sizeof(mux_en_pins[]) / mux_en_pins[0]); pin++) {
+        gpio_set_pin_output(mux_en_pins[pin]);
+        gpio_write_pin_high(mux_en_pins[pin])
+    }
+    for (uint8_t pin = 0; pin < (sizeof(mux_sel_pins[]) / mux_sel_pins[0]); pin++) {
+        gpio_set_pin_output(mux_sel_pins[pin]);
+        gpio_write_pin_low(mux_sel_pins[pin]);
     }
 }
 
@@ -42,9 +70,28 @@ void ec_sw_discharge(uint8_t row) {
     wait_us(DISCHARGE_TIME_US);
 }
 
+// Они же active low ?
+static inline void mux_disable_unused(uint8_t current_mux) {
+    for (uint8_t i = 0; i < MUX_COUNT; i++) {
+        if (mux != current_mux) {
+            gpio_write_pin_high(mux_en_pins[current_mux]);
+        }
+        gpio_write_pin_low(mux_en_pins[current_mux]);
+    }
+}
+
+static inline void mux_enable_current(uint8_t current_mux) {}
+
+static inline void mux_channel_select(uint8_t mux, uint8_t channel) {
+
+
+}
+
 // Сканирование конкретного датчика по адресу в матрице
-uint16_t ec_sw_scan(uint8_t col, uint8_t row) {
+static inline uint16_t ec_sw_scan(uint8_t mux, uint8_t col_physical, uint8_t row) {
     uint16_t raw_adc_readings = 0;
+
+    mux_channel_select(mux, col_physical);
 
     gpio_write_pin_low(row_pins[row]);
 
@@ -58,8 +105,6 @@ uint16_t ec_sw_scan(uint8_t col, uint8_t row) {
     gpio_set_pin_output(DISCHARGE_PIN);
 
     wait_us(DISCHARGE_TIME_US);
-
-    log_matrix[col][row] = raw_adc_readings; // Логирования сканирований
 
     return raw_adc_readings;
 }
@@ -89,65 +134,79 @@ void ec_floor_sample(void) {
 // Функция сканирования и обновления current matrix
 bool ec_matrix_scan(matrix_row_t current_matrix[]) {
     bool has_changed = false;
+    for (uint8_t mux = 0; mux < MUX_COUNT; mux++) {
+        mux_disable_unused();
+        // mux_enable_current();
+        uint8_t col_offset = 0;
+        for (uint8_t col_physical = 0; col_physical < mux_current_capacity[mux]; col_physical++) {
+            for (uint8_t i = 0; i < mux; i++) { // Тут делаем смещение колонки относительно стоящих перед ней в матрице (0 мультиплексор скип)
+                col_offset += mux_current_capacity[i];
+            }
+            uint8_t col_matrix = col_physical + col_offset;
 
-    for (uint8_t col = 0; col < MATRIX_COLS; col++) {
-        for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
-            switch (runtime_config.kb_current_operation_mode) {
-                uint16_t raw_adc_readings;
-                // Нормальная работа
-                case 0:
-                    raw_adc_readings           = ec_sw_scan(col, row);
-                    uint8_t key_previous_state = (current_matrix[row] >> col) & 1; // Запрашиваем текущее состояние клавиши (нажата или отпущена)
+            for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
+#ifdef UNUSED_ADRESSES
+                if (matrix_address_unused(col_matrix, row)) {
+                    continue;
+                }
+#endif
+                switch (runtime_config.kb_current_operation_mode) {
+                    uint16_t raw_adc_readings = ec_sw_scan(mux, col_physical, row);
 
-                    if (raw_adc_readings <= runtime_config.floor_level_per_key[col][row]) {
+                    // Нормальная работа
+                    case 0:
+                        log_matrix[col][row] = raw_adc_readings; // Логирования сканирований
+
+                        if (raw_adc_readings <= runtime_config.floor_level_per_key[col_matrix][row]) {
+                            break;
+                        }
+
+                        uint8_t key_previous_state = (current_matrix[row] >> col_matrix) & 1; // Запрашиваем текущее состояние клавиши (нажата или отпущена)
+
+                        if (raw_adc_readings > runtime_config.actuation_level_per_key[col_matrix][row] && key_previous_state == 0) {
+                            current_matrix[row] |= (1 << col_matrix); // Нажимаем
+                            has_changed = true;
+                        }
+
+                        if (raw_adc_readings < runtime_config.release_level_per_key[col_matrix][row] && key_previous_state == 1) {
+                            current_matrix[row] &= ~(1 << col_matrix); // Отпускаем
+                            has_changed = true;
+                        }
+
                         break;
-                    }
 
-                    if (raw_adc_readings > runtime_config.actuation_level_per_key[col][row] && key_previous_state == 0) {
-                        current_matrix[row] |= (1 << col); // Нажимаем
-                        has_changed = true;
-                    }
+                    // Калибровка порогов
+                    case 1:
+                        uint8_t key_calibration_status = (runtime_config.calibration_status_per_key_bits[row] >> col_matrix) & 1; // Запрашиваем статус калибровки конкретной клавиши
 
-                    if (raw_adc_readings < runtime_config.release_level_per_key[col][row] && key_previous_state == 1) {
-                        current_matrix[row] &= ~(1 << col); // Отпускаем
-                        has_changed = true;
-                    }
+                        if (key_calibration_status == 0) {
+                            runtime_config.ceiling_level_per_key[col_matrix][row] = 0;
+                            runtime_config.ceiling_level_per_key[col_matrix][row] = raw_adc_readings;
+                            runtime_config.calibration_status_per_key_bits[row] |= (1 << col_matrix);
+                        }
 
-                    break;
+                        if (runtime_config.ceiling_level_per_key[col_matrix][row] < raw_adc_readings) {
+                            runtime_config.ceiling_level_per_key[col_matrix][row] = raw_adc_readings;
+                        }
 
-                // Калибровка порогов
-                case 1:
-                    raw_adc_readings               = ec_sw_scan(col, row);
-                    uint8_t key_calibration_status = (runtime_config.calibration_status_per_key_bits[row] >> col) & 1; // Запрашиваем статус калибровки конкретной клавиши
-
-                    if (key_calibration_status == 0) {
-                        runtime_config.ceiling_level_per_key[col][row] = 0;
-                        runtime_config.ceiling_level_per_key[col][row] = raw_adc_readings;
-                        runtime_config.calibration_status_per_key_bits[row] |= (1 << col);
-                    }
-
-                    if (runtime_config.ceiling_level_per_key[col][row] < raw_adc_readings) {
-                        runtime_config.ceiling_level_per_key[col][row] = raw_adc_readings;
-                    }
-
-                    break;
-
-                // Запись SOCD
-                case 2:
-
-                    raw_adc_readings = ec_sw_scan(col, row);
-
-                    if (raw_adc_readings < runtime_config.actuation_level_per_key[col][row]) {
                         break;
-                    }
-                    socd_mapper(col, row);
-                    break;
 
-                default:
-                    break;
+                    // Запись SOCD
+                    case 2:
+
+                        if (raw_adc_readings < runtime_config.actuation_level_per_key[col_matrix][row]) {
+                            break;
+                        }
+                        socd_mapper(col_matrix, row);
+                        break;
+
+                    default:
+                        break;
+                }
             }
         }
     }
+
     runtime_config.socd_pair_0_flags_bits = socd_perform_pair(current_matrix, &runtime_config.socd_pair_0, runtime_config.socd_pair_0_flags_bits);
     runtime_config.socd_pair_1_flags_bits = socd_perform_pair(current_matrix, &runtime_config.socd_pair_1, runtime_config.socd_pair_1_flags_bits);
     runtime_config.socd_pair_2_flags_bits = socd_perform_pair(current_matrix, &runtime_config.socd_pair_2, runtime_config.socd_pair_2_flags_bits);
@@ -158,9 +217,8 @@ bool ec_matrix_scan(matrix_row_t current_matrix[]) {
 // Инициализация матрицы СТАНДАРТНАЯ
 void matrix_init_custom(void) {
     adc_int();
-
     pins_init();
-
+    mux_init();
     ec_floor_sample();
 }
 

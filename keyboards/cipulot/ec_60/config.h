@@ -26,7 +26,6 @@
 
 #define AMUX_COUNT 2
 #define AMUX_MAX_COLS_COUNT 8
-#define AMUX_CURRENT_CAPACITY {8, 6}
 
 #define AMUX_EN_PINS \
     { B7, B3 }

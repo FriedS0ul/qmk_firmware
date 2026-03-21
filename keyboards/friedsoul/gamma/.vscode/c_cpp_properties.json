@@ -3,22 +3,39 @@
         {
             "name": "Win32",
             "includePath": [
-                "${workspaceFolder}/**",
+                "d:/QMK/keyboards/friedsoul/gamma/**",
                 "D:/QMK/quantum",
                 "D:/QMK/tmk_core",
-                "D:\\QMK\\platforms\\avr\\drivers",
-                "D:\\QMK\\qmk_firmware\\platforms",
-                "D:\\QMK_MSYS\\mingw64\\avr\\include\\avr",
-                "D:\\QMK\\platforms\\chibios",
-                "D:\\QMK\\platforms\\avr",
-                "D:\\QMK\\platforms",
+                "D:/QMK/platforms/avr/drivers",
+                "D:/QMK/qmk_firmware/platforms",
+                "D:/QMK_MSYS/mingw64/avr/include/avr",
+                "D:/QMK/platforms/chibios",
+                "D:/QMK/platforms/avr",
+                "D:/QMK/platforms",
                 "D:/QMK/platforms/test",
                 "D:/QMK/quantum/keymap_extras",
                 "D:/QMK/platforms/avr",
-                "D:\\QMK_MSYS\\mingw64\\avr\\include",
+                "D:/QMK_MSYS/mingw64/avr/include",
                 "D:/QMK/quantum/logging",
                 "D:/QMK/quantum/sequencer",
-                "${workspaceFolder}"
+                "d:/QMK/keyboards/friedsoul/gamma"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "mergeConfigurations": false,
+            "recursiveIncludes": {},
+            "compilerPath": "d:\\QMK_MSYS\\mingw64\\bin\\gcc.exe",
+            "browse": {
+                "limitSymbolsToIncludedHeaders": true
+            }
+        },
+        {
+            "name": "arm",
+            "includePath": [
+                "${workspaceFolder}/**"
             ],
             "defines": [
                 "_DEBUG",
