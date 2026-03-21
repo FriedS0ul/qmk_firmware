@@ -36,14 +36,14 @@ void runtime_renew(void) {
     runtime_config.release_level_global          = eeprom_config.release_level_global;
     runtime_config.advanced_features_status_bits = eeprom_config.advanced_features_status_bits;
 
-    runtime_config.socd_pair_0 = eeprom_config.socd_pair_0;
-    runtime_config.socd_pair_0_flags_bits    = 0;
+    runtime_config.socd_pair_0            = eeprom_config.socd_pair_0;
+    runtime_config.socd_pair_0_flags_bits = 0;
 
-    runtime_config.socd_pair_1 = eeprom_config.socd_pair_1;
-    runtime_config.socd_pair_1_flags_bits    = 0;
+    runtime_config.socd_pair_1            = eeprom_config.socd_pair_1;
+    runtime_config.socd_pair_1_flags_bits = 0;
 
-    runtime_config.socd_pair_2 = eeprom_config.socd_pair_2;
-    runtime_config.socd_pair_2_flags_bits    = 0;
+    runtime_config.socd_pair_2            = eeprom_config.socd_pair_2;
+    runtime_config.socd_pair_2_flags_bits = 0;
 
     for (uint8_t col = 0; col < MATRIX_COLS; col++) {
         for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
@@ -64,8 +64,8 @@ void eeprom_reset(void) {
     eeprom_config.advanced_features_status_bits = 0;
 
     memset(&eeprom_config.socd_pair_0, 0, sizeof(eeprom_config.socd_pair_0)); // Обнуляем SOCD пары
-    memset(&eeprom_config.socd_pair_1, 0, sizeof(eeprom_config.socd_pair_1));
-    memset(&eeprom_config.socd_pair_2, 0, sizeof(eeprom_config.socd_pair_2));
+    memset(&eeprom_config.socd_pair_1, 0, sizeof(eeprom_config.socd_pair_1)); // Обнуляем SOCD пары
+    memset(&eeprom_config.socd_pair_2, 0, sizeof(eeprom_config.socd_pair_2)); // Обнуляем SOCD пары
 
     for (uint8_t col = 0; col < MATRIX_COLS; col++) {
         for (uint8_t row = 0; row < MATRIX_ROWS; row++) {

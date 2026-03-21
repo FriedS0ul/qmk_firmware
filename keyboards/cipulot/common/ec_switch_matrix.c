@@ -253,7 +253,7 @@ uint16_t ec_readkey_raw(uint8_t channel, uint8_t row, uint8_t col) {
 }
 
 // Update press/release state of key
-bool ec_update_key(matrix_row_t* current_row, uint8_t row, uint8_t col, uint16_t sw_value) {
+bool ec_update_key(matrix_row_t *current_row, uint8_t row, uint8_t col, uint16_t sw_value) {
     bool current_state = (*current_row >> col) & 1;
 
     // Real Time Noise Floor Calibration

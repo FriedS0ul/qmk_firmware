@@ -15,9 +15,9 @@
 #define MUX_EN_PINS { B5, B7 }
 #define MUX_SEL_PINS { A15, B3, B4 }
 
-#define MUX_0_LOGICAL_CHANNELS { 2, 1, 0, 4, 6, 7, 5, 3 } // Тут стоят физические каналы мультиплексоров в логическом порядке
-#define MUX_1_LOGICAL_CHANNELS { 5, 4, 2, 1, 0, 3 }
-#define MUX_LOGICAL_CHANNELS MUX_0_LOGICAL_CHANNELS, MUX_1_LOGICAL_CHANNELS
+#define MUX_0_CHANNELS_IN_LOGICAL_ORDER { 2, 1, 0, 4, 6, 7, 5, 3 } // Тут каналы мультиплексора по порядку подключения к ним столбцов матрицы. То есть столбец 0 - канал 2, столбец 1 - канал 1 и так далее.
+#define MUX_1_CHANNELS_IN_LOGICAL_ORDER { 5, 4, 2, 1, 0, 3 }
+#define MUX_CHANNELS_IN_LOGICAL_ORDER MUX_0_CHANNELS_IN_LOGICAL_ORDER, MUX_1_CHANNELS_IN_LOGICAL_ORDER
 
 // ПИНЫ
 #define MATRIX_ROW_PINS { A10, A9, A8, B15, A4 } // Пины рядов матрицы

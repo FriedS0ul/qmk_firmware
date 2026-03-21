@@ -7,11 +7,15 @@
 #include <print.h>
 #include "eeprom_config.h"
 
-static const pin_t   row_pins[]                                        = MATRIX_ROW_PINS;
-static const pin_t   mux_en_pins[]                                     = MUX_EN_PINS;
-static const pin_t   mux_sel_pins[]                                    = MUX_SEL_PINS;
-static const uint8_t mux_logical_channels[MUX_COUNT][MUX_MAX_CAPACITY] = MUX_LOGICAL_CHANNELS;
-static const uint8_t mux_current_capacity[MUX_COUNT]                   = MUX_CURRENT_CAPACITY;
+static const pin_t   row_pins[]                                                 = MATRIX_ROW_PINS;
+static const pin_t   mux_en_pins[]                                              = MUX_EN_PINS;
+static const pin_t   mux_sel_pins[]                                             = MUX_SEL_PINS;
+static const uint8_t mux_channels_in_logical_order[MUX_COUNT][MUX_MAX_CAPACITY] = {MUX_CHANNELS_IN_LOGICAL_ORDER};
+static const uint8_t mux_current_capacity[MUX_COUNT]                            = MUX_CURRENT_CAPACITY;
+
+// col_matrix - номер столбца с примененным оффсетом, как они располлагаются в current_matrix
+// col_logical - номер столбца в рамках одного мультиплексора, без применения оффсета
+// channel - физический номер канала мультиплексора
 
 #ifdef UNUSED_ADRESSES
 static const uint8_t matrix_unused_adresses[][2] = UNUSED_ADRESSES;
@@ -41,7 +45,8 @@ static inline void pins_init(void) {
         gpio_set_pin_output(row_pins[row]);
     }
 }
-// Ставим
+
+// Выставляем управляющие пины мультиплексора ()
 static inline void mux_init(void) {
     for (uint8_t pin = 0; pin < (sizeof(mux_en_pins) / mux_en_pins[0]); pin++) {
         gpio_set_pin_output(mux_en_pins[pin]);
@@ -54,74 +59,98 @@ static inline void mux_init(void) {
 }
 
 // Зарядка ряда для сканирования
-void ec_sw_charge(uint8_t row) {
+static inline void ec_sw_charge(uint8_t row) {
     gpio_write_pin_high(row_pins[row]);
-
     gpio_set_pin_input(DISCHARGE_PIN);
 }
 
 // Разрядка COM линии после сканирования
-void ec_sw_discharge(uint8_t row) {
+static inline void ec_sw_discharge(uint8_t row) {
     gpio_write_pin_low(row_pins[row]);
-
     gpio_write_pin_low(DISCHARGE_PIN);
     gpio_set_pin_output(DISCHARGE_PIN);
 
     wait_us(DISCHARGE_TIME_US);
 }
 
-// Они же active low ?
-static inline void mux_disable_unused(uint8_t current_mux) {
+// Включает выбранный мультиплексор, отключает остальные
+static inline void mux_enable_current(uint8_t current_mux) {
     for (uint8_t i = 0; i < MUX_COUNT; i++) {
-        if (i != current_mux) {
-            gpio_write_pin_high(mux_en_pins[current_mux]);
+        if (i == current_mux) {
+            gpio_write_pin_low(mux_en_pins[i]);
         }
-        gpio_write_pin_low(mux_en_pins[current_mux]);
+        gpio_write_pin_high(mux_en_pins[i]);
     }
 }
 
-static inline void mux_enable_current(uint8_t current_mux) {}
+// Отключается все мультиплексоры
+static inline void mux_disable_all(void) {
+    for (uint8_t i = 0; i < MUX_COUNT; i++) {
+        gpio_write_pin_high(mux_en_pins[i]);
+    }
+}
 
-static inline void mux_channel_select(uint8_t mux, uint8_t channel) {}
+// Переключает канал мультиплексора на основе mux и col_logical
+static inline void mux_channel_select(uint8_t mux, uint8_t col_logical) {
+    uint8_t channel = mux_channels_in_logical_order[mux][col_logical];
+    mux_disable_all();
+
+    for (uint8_t pin = 0; pin < (sizeof(mux_sel_pins) / sizeof(mux_sel_pins[0])); pin++) {
+        gpio_write_pin(mux_sel_pins[pin], (channel >> pin) & 1);
+    }
+
+    mux_enable_current(mux);
+    wait_us(5); // Чутка ждем для стабилизации уровня (Надо протестировать, нужно ли вообще)
+}
 
 // Сканирование конкретного датчика по адресу в матрице
-static inline uint16_t ec_sw_scan(uint8_t mux, uint8_t col_physical, uint8_t row) {
+static inline uint16_t ec_sw_scan(uint8_t row) {
     uint16_t raw_adc_readings = 0;
+    /*
+        gpio_write_pin_low(row_pins[row]);
+        gpio_set_pin_input(DISCHARGE_PIN);
+    */
+    ATOMIC_BLOCK_FORCEON {
+        // gpio_write_pin_high(row_pins[row]);
+        ec_sw_charge(row_pins[row]);
+        raw_adc_readings = analogReadPin(ANALOG_READINGS_INPUT); // Возможно стоит сделать атомарный блок для сканирования + еще поработать над логикой для минимизации шума
+    }
+    /*
+        gpio_write_pin_low(DISCHARGE_PIN);
+        gpio_set_pin_output(DISCHARGE_PIN);
 
-    mux_channel_select(mux, col_physical);
-
-    gpio_write_pin_low(row_pins[row]);
-
-    gpio_set_pin_input(DISCHARGE_PIN);
-
-    gpio_write_pin_high(row_pins[row]);
-
-    raw_adc_readings = analogReadPin(ANALOG_READINGS_INPUT); // Возможно стоит сделать атомарный блок для сканирования + еще поработать над логикой для минимизации шума
-
-    gpio_write_pin_low(DISCHARGE_PIN);
-    gpio_set_pin_output(DISCHARGE_PIN);
-
-    wait_us(DISCHARGE_TIME_US);
-
+        wait_us(DISCHARGE_TIME_US);
+    */
+    ec_sw_discharge(row_pins[row]);
     return raw_adc_readings;
 }
 
-// Семплинг нижнего порога клавиши (В покое)
-void ec_floor_sample(void) {
+// Семплинг нижнего порога клавиш во время старта.
+static inline void ec_floor_sample(void) {
     uint16_t raw_adc_readings = 0;
-
-    for (uint8_t col = 0; col < MATRIX_COLS; col++) {
-        for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
-            runtime_config.floor_level_per_key[col][row] = 0;
-        }
-    }
+    memset(&runtime_config.floor_level_per_key, 0, sizeof(runtime_config.floor_level_per_key)); // Заполняем массив нулями
 
     for (uint8_t count = 0; count < FLOOR_LEVEL_SAMPLING_COUNT; count++) {
-        for (uint8_t col = 0; col < MATRIX_COLS; col++) {
-            for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
-                raw_adc_readings = ec_sw_scan(1, col, row);
-                if (raw_adc_readings > runtime_config.floor_level_per_key[col][row]) {
-                    runtime_config.floor_level_per_key[col][row] = raw_adc_readings;
+        for (uint8_t mux = 0; mux < MUX_COUNT; mux++) {
+            uint8_t col_offset = 0;
+            for (uint8_t col_logical = 0; col_logical < mux_current_capacity[mux]; col_logical++) {
+                for (uint8_t i = 0; i < mux; i++) {
+                    col_offset += mux_current_capacity[i]; // Вычисляем смещение для col_matrix на основе текущей емкости мультиплексора (Для 0 мультиплексора смещения нет)
+                }
+                uint8_t col_matrix = col_logical + col_offset;
+
+                mux_channel_select(mux, col_logical); // Переключаем канал мультиплексора
+
+                for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
+#ifdef UNUSED_ADRESSES
+                    if (matrix_address_unused(col_matrix, row)) {
+                        continue;
+                    }
+#endif
+                    raw_adc_readings = ec_sw_scan(row);
+                    if (raw_adc_readings > runtime_config.floor_level_per_key[col_matrix][row]) {
+                        runtime_config.floor_level_per_key[col_matrix][row] = raw_adc_readings;
+                    }
                 }
             }
         }
@@ -130,16 +159,17 @@ void ec_floor_sample(void) {
 
 // Функция сканирования и обновления current matrix
 bool ec_matrix_scan(matrix_row_t current_matrix[]) {
-    bool has_changed = false;
+    // bool has_changed = false;
+    uint16_t raw_adc_readings = 0;
     for (uint8_t mux = 0; mux < MUX_COUNT; mux++) {
-        mux_disable_unused(mux);
-        // mux_enable_current();
         uint8_t col_offset = 0;
-        for (uint8_t col_physical = 0; col_physical < mux_current_capacity[mux]; col_physical++) {
-            for (uint8_t i = 0; i < mux; i++) { // Тут делаем смещение колонки относительно стоящих перед ней в матрице (0 мультиплексор скип)
-                col_offset += mux_current_capacity[i];
+        for (uint8_t col_logical = 0; col_logical < mux_current_capacity[mux]; col_logical++) {
+            for (uint8_t i = 0; i < mux; i++) {
+                col_offset += mux_current_capacity[i]; // Вычисляем смещение для col_matrix на основе текущей емкости мультиплексора (Для 0 мультиплексора смещения нет)
             }
-            uint8_t col_matrix = col_physical + col_offset;
+            uint8_t col_matrix = col_logical + col_offset;
+
+            mux_channel_select(mux, col_logical); // Переключаем канал мультиплексора
 
             for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
 #ifdef UNUSED_ADRESSES
@@ -147,13 +177,12 @@ bool ec_matrix_scan(matrix_row_t current_matrix[]) {
                     continue;
                 }
 #endif
-                uint16_t raw_adc_readings = ec_sw_scan(mux, col_physical, row);
+                raw_adc_readings            = ec_sw_scan(row);
+                log_matrix[col_matrix][row] = raw_adc_readings; // Логирования сканирований
 
                 switch (runtime_config.kb_current_operation_mode) {
                     // Нормальная работа
                     case 0:
-                        log_matrix[col_matrix][row] = raw_adc_readings; // Логирования сканирований
-
                         if (raw_adc_readings <= runtime_config.floor_level_per_key[col_matrix][row]) {
                             break;
                         }
@@ -162,12 +191,14 @@ bool ec_matrix_scan(matrix_row_t current_matrix[]) {
 
                         if (raw_adc_readings > runtime_config.actuation_level_per_key[col_matrix][row] && key_previous_state == 0) {
                             current_matrix[row] |= (1 << col_matrix); // Нажимаем
-                            has_changed = true;
+                            // has_changed = true;
+                            return true;
                         }
 
                         if (raw_adc_readings < runtime_config.release_level_per_key[col_matrix][row] && key_previous_state == 1) {
                             current_matrix[row] &= ~(1 << col_matrix); // Отпускаем
-                            has_changed = true;
+                            // has_changed = true;
+                            return true;
                         }
 
                         break;
@@ -208,7 +239,7 @@ bool ec_matrix_scan(matrix_row_t current_matrix[]) {
     runtime_config.socd_pair_1_flags_bits = socd_perform_pair(current_matrix, &runtime_config.socd_pair_1, runtime_config.socd_pair_1_flags_bits);
     runtime_config.socd_pair_2_flags_bits = socd_perform_pair(current_matrix, &runtime_config.socd_pair_2, runtime_config.socd_pair_2_flags_bits);
 
-    return has_changed;
+    return false;
 }
 
 // Инициализация матрицы СТАНДАРТНАЯ
