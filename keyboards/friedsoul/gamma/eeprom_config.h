@@ -6,12 +6,6 @@
 #include "config.h"
 #include "quantum.h"
 
-/*
-bool - 1 байт
-unt8_t - 1 байт
-uint16_t - 2 байта
-*/
-
 // Enums для advanced_features_status_bits
 enum advanced_features_bit_ids {
 
@@ -23,8 +17,8 @@ enum advanced_features_bit_ids {
 
 enum socd_pair_flags_bit_ids {
 
-    bits_key_0_after_socd  = 5,
-    bits_key_1_after_socd  = 6,
+    bits_key_0_after_socd = 5,
+    bits_key_1_after_socd = 6,
 
     bits_pressed_last      = 0,
     bits_key_0_before_socd = 1,
@@ -71,13 +65,13 @@ typedef struct {
     uint8_t  advanced_features_status_bits;                     // |         7         |      6      |            5          | 4 | 3 | 2 | 1 | 0 |
                                                                 // | Advanced features | SOCD Global | Actuation mode global | 0 | 0 | 0 | 0 | 0 |
     socd_pair_t socd_pair_0;                                    // SOCD пара 0
-    uint8_t socd_pair_0_flags_bits;
-    socd_pair_t socd_pair_1;                                    // SOCD пара 1
-    uint8_t socd_pair_1_flags_bits;
-    socd_pair_t socd_pair_2;                                    // SOCD пара 2
-    uint8_t socd_pair_2_flags_bits;
+    uint8_t     socd_pair_0_flags_bits;
+    socd_pair_t socd_pair_1; // SOCD пара 1
+    uint8_t     socd_pair_1_flags_bits;
+    socd_pair_t socd_pair_2; // SOCD пара 2
+    uint8_t     socd_pair_2_flags_bits;
 
-    uint8_t     socd_pair_current;
+    uint8_t socd_pair_current;
 
 // Битовые матрицы статуса калибровки
 #if (MATRIX_COLS <= 8)

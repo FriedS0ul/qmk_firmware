@@ -27,34 +27,32 @@ void pins_init(void) {
 }
 
 // Зарядка ряда для сканирования
-void ec_sw_charge(uint8_t row) {
-    gpio_write_pin_high(row_pins[row]);
-
+static inline void ec_sw_charge(uint8_t row) {
     gpio_set_pin_input(DISCHARGE_PIN);
+    gpio_write_pin_high(row_pins[row]);
 }
 
 // Разрядка COM линии после сканирования
-void ec_sw_discharge(uint8_t row) {
-    gpio_write_pin_low(row_pins[row]);
-
+static inline void ec_sw_discharge(uint8_t row) {
     gpio_write_pin_low(DISCHARGE_PIN);
     gpio_set_pin_output(DISCHARGE_PIN);
+    gpio_write_pin_low(row_pins[row]);
 
     wait_us(DISCHARGE_TIME_US);
 }
 
 // Сканирование конкретного датчика по адресу в матрице
-uint16_t ec_sw_scan(uint8_t col, uint8_t row) {
+static inline uint16_t ec_sw_scan(uint8_t col, uint8_t row) {
     uint16_t raw_adc_readings = 0;
 
     gpio_write_pin_low(row_pins[row]);
-
     gpio_set_pin_input(DISCHARGE_PIN);
 
     gpio_write_pin_high(row_pins[row]);
-
+    // ec_sw_charge(row);
     raw_adc_readings = analogReadPin(ANALOG_READINGS_INPUT); // Возможно стоит сделать атомарный блок для сканирования + еще поработать над логикой для минимизации шума
 
+    // ec_sw_discharge(row);
     gpio_write_pin_low(DISCHARGE_PIN);
     gpio_set_pin_output(DISCHARGE_PIN);
 

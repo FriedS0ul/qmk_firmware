@@ -32,10 +32,12 @@ static inline bool   matrix_address_unused(uint8_t col_matrix, uint8_t row) {
 eeprom_config_t  eeprom_config;
 runtime_config_t runtime_config;
 
+// Настройка аналогового пина с помощью PAL
 static inline void adc_int(void) {
     palSetLineMode(ANALOG_READINGS_INPUT, PAL_MODE_INPUT_ANALOG);
 }
 
+// Пин рязрядки в ряды в output low
 static inline void pins_init(void) {
     gpio_write_pin_low(DISCHARGE_PIN);
     gpio_set_pin_output(DISCHARGE_PIN);
@@ -78,8 +80,10 @@ static inline void mux_enable_current(uint8_t current_mux) {
     for (uint8_t i = 0; i < MUX_COUNT; i++) {
         if (i == current_mux) {
             gpio_write_pin_low(mux_en_pins[i]);
+            gpio_set_pin_output(mux_en_pins[i]);
         }
         gpio_write_pin_high(mux_en_pins[i]);
+        gpio_set_pin_output(mux_en_pins[i]);
     }
 }
 
@@ -87,6 +91,7 @@ static inline void mux_enable_current(uint8_t current_mux) {
 static inline void mux_disable_all(void) {
     for (uint8_t i = 0; i < MUX_COUNT; i++) {
         gpio_write_pin_high(mux_en_pins[i]);
+        gpio_set_pin_output(mux_en_pins[i]);
     }
 }
 
@@ -97,31 +102,28 @@ static inline void mux_channel_select(uint8_t mux, uint8_t col_logical) {
 
     for (uint8_t pin = 0; pin < (sizeof(mux_sel_pins) / sizeof(mux_sel_pins[0])); pin++) {
         gpio_write_pin(mux_sel_pins[pin], (channel >> pin) & 1);
+        gpio_set_pin_output(mux_sel_pins[pin]);
     }
 
     mux_enable_current(mux);
-    wait_us(5); // Чутка ждем для стабилизации уровня (Надо протестировать, нужно ли вообще)
+    //wait_us(5); // Чутка ждем для стабилизации уровня (Надо протестировать, нужно ли вообще)
 }
 
 // Сканирование конкретного датчика по адресу в матрице
 static inline uint16_t ec_sw_scan(uint8_t row) {
     uint16_t raw_adc_readings = 0;
-    /*
-        gpio_write_pin_low(row_pins[row]);
-        gpio_set_pin_input(DISCHARGE_PIN);
-    */
-    ATOMIC_BLOCK_FORCEON {
-        // gpio_write_pin_high(row_pins[row]);
-        ec_sw_charge(row_pins[row]);
-        raw_adc_readings = analogReadPin(ANALOG_READINGS_INPUT); // Возможно стоит сделать атомарный блок для сканирования + еще поработать над логикой для минимизации шума
-    }
-    /*
-        gpio_write_pin_low(DISCHARGE_PIN);
-        gpio_set_pin_output(DISCHARGE_PIN);
 
-        wait_us(DISCHARGE_TIME_US);
-    */
-    ec_sw_discharge(row_pins[row]);
+    gpio_write_pin_low(row_pins[row]);
+    gpio_set_pin_input(DISCHARGE_PIN);
+
+    gpio_write_pin_high(row_pins[row]);
+    raw_adc_readings = analogReadPin(ANALOG_READINGS_INPUT);
+
+    gpio_write_pin_low(DISCHARGE_PIN);
+    gpio_set_pin_output(DISCHARGE_PIN);
+
+    wait_us(DISCHARGE_TIME_US);
+
     return raw_adc_readings;
 }
 
@@ -159,10 +161,11 @@ static inline void ec_floor_sample(void) {
 
 // Функция сканирования и обновления current matrix
 bool ec_matrix_scan(matrix_row_t current_matrix[]) {
-    // bool has_changed = false;
+    bool     has_changed      = false;
     uint16_t raw_adc_readings = 0;
     for (uint8_t mux = 0; mux < MUX_COUNT; mux++) {
         uint8_t col_offset = 0;
+
         for (uint8_t col_logical = 0; col_logical < mux_current_capacity[mux]; col_logical++) {
             for (uint8_t i = 0; i < mux; i++) {
                 col_offset += mux_current_capacity[i]; // Вычисляем смещение для col_matrix на основе текущей емкости мультиплексора (Для 0 мультиплексора смещения нет)
@@ -191,14 +194,12 @@ bool ec_matrix_scan(matrix_row_t current_matrix[]) {
 
                         if (raw_adc_readings > runtime_config.actuation_level_per_key[col_matrix][row] && key_previous_state == 0) {
                             current_matrix[row] |= (1 << col_matrix); // Нажимаем
-                            // has_changed = true;
-                            return true;
+                            has_changed = true;
                         }
 
                         if (raw_adc_readings < runtime_config.release_level_per_key[col_matrix][row] && key_previous_state == 1) {
                             current_matrix[row] &= ~(1 << col_matrix); // Отпускаем
-                            // has_changed = true;
-                            return true;
+                            has_changed = true;
                         }
 
                         break;
@@ -239,7 +240,30 @@ bool ec_matrix_scan(matrix_row_t current_matrix[]) {
     runtime_config.socd_pair_1_flags_bits = socd_perform_pair(current_matrix, &runtime_config.socd_pair_1, runtime_config.socd_pair_1_flags_bits);
     runtime_config.socd_pair_2_flags_bits = socd_perform_pair(current_matrix, &runtime_config.socd_pair_2, runtime_config.socd_pair_2_flags_bits);
 
-    return false;
+    return has_changed;
+}
+
+bool ec_matrix_scan_test(matrix_row_t current_matrix[]) {
+    uint16_t raw_adc_readings = 0;
+    for (uint8_t mux = 0; mux < MUX_COUNT; mux++) {
+        uint8_t col_offset = 0;
+
+        for (uint8_t col_logical = 0; col_logical < mux_current_capacity[mux]; col_logical++) {
+            for (uint8_t i = 0; i < mux; i++) {
+                col_offset += mux_current_capacity[i]; // Вычисляем смещение для col_matrix на основе текущей емкости мультиплексора (Для 0 мультиплексора смещения нет)
+            }
+            uint8_t col_matrix = col_logical + col_offset;
+
+            mux_channel_select(mux, col_logical); // Переключаем канал мультиплексора
+
+            for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
+                raw_adc_readings            = ec_sw_scan(row);
+            }
+            uprintf("Col matrix %d:, %d\n", col_matrix, raw_adc_readings);
+        }
+    }
+
+    return true;
 }
 
 // Инициализация матрицы СТАНДАРТНАЯ
@@ -252,8 +276,31 @@ void matrix_init_custom(void) {
 
 // Сканирование матрицы СТАНДАРТНАЯ
 bool matrix_scan_custom(matrix_row_t current_matrix[]) {
-    bool matrix_has_changed = ec_matrix_scan(current_matrix);
 
-    logger();
+    bool matrix_has_changed = true; //ec_matrix_scan_test(current_matrix);
+
+    for (uint8_t pin = 0; pin < (sizeof(mux_en_pins) / mux_en_pins[0]); pin++) {
+    
+        gpio_write_pin_high(mux_en_pins[pin]);
+        gpio_set_pin_output(mux_en_pins[pin]);
+    }
+    for (uint8_t pin = 0; pin < (sizeof(mux_sel_pins) / mux_sel_pins[0]); pin++) {
+
+        gpio_write_pin_low(mux_sel_pins[pin]);
+        gpio_set_pin_output(mux_sel_pins[pin]);
+    }
+
+    gpio_write_pin_low(DISCHARGE_PIN);
+    gpio_set_pin_output(DISCHARGE_PIN);
+
+    for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
+        gpio_write_pin_low(row_pins[row]);
+        gpio_set_pin_output(row_pins[row]);
+    }
+    
+    uint16_t readings = analogReadPin(ANALOG_READINGS_INPUT);
+    
+    uprintf("Scanned: %d\n", readings);
+    //logger();
     return matrix_has_changed;
 }
