@@ -15,8 +15,8 @@ static const uint8_t mux_current_capacity[MUX_COUNT]                   = MUX_CUR
 
 #ifdef UNUSED_ADRESSES
 static const uint8_t matrix_unused_adresses[][2] = UNUSED_ADRESSES;
-static inline bool   matrix_address_unused(uint8_t col_matrixm, uint8_t row) {
-    for (uint8_t i = 0; i < (sizeof(matrix_unused_adresses[][]) / sizeof(matrix_unused_adresses[0][0])); i++) {
+static inline bool   matrix_address_unused(uint8_t col_matrix, uint8_t row) {
+    for (uint8_t i = 0; i < (sizeof(matrix_unused_adresses) / sizeof(matrix_unused_adresses[0][0])); i++) {
         if (matrix_unused_adresses[i][0] == col_matrix && matrix_unused_adresses[i][1] == row) {
             return true;
         }
@@ -43,11 +43,11 @@ static inline void pins_init(void) {
 }
 // Ставим
 static inline void mux_init(void) {
-    for (uint8_t pin = 0; pin < (sizeof(mux_en_pins[]) / mux_en_pins[0]); pin++) {
+    for (uint8_t pin = 0; pin < (sizeof(mux_en_pins) / mux_en_pins[0]); pin++) {
         gpio_set_pin_output(mux_en_pins[pin]);
-        gpio_write_pin_high(mux_en_pins[pin])
+        gpio_write_pin_high(mux_en_pins[pin]);
     }
-    for (uint8_t pin = 0; pin < (sizeof(mux_sel_pins[]) / mux_sel_pins[0]); pin++) {
+    for (uint8_t pin = 0; pin < (sizeof(mux_sel_pins) / mux_sel_pins[0]); pin++) {
         gpio_set_pin_output(mux_sel_pins[pin]);
         gpio_write_pin_low(mux_sel_pins[pin]);
     }
@@ -73,7 +73,7 @@ void ec_sw_discharge(uint8_t row) {
 // Они же active low ?
 static inline void mux_disable_unused(uint8_t current_mux) {
     for (uint8_t i = 0; i < MUX_COUNT; i++) {
-        if (mux != current_mux) {
+        if (i != current_mux) {
             gpio_write_pin_high(mux_en_pins[current_mux]);
         }
         gpio_write_pin_low(mux_en_pins[current_mux]);
@@ -82,10 +82,7 @@ static inline void mux_disable_unused(uint8_t current_mux) {
 
 static inline void mux_enable_current(uint8_t current_mux) {}
 
-static inline void mux_channel_select(uint8_t mux, uint8_t channel) {
-
-
-}
+static inline void mux_channel_select(uint8_t mux, uint8_t channel) {}
 
 // Сканирование конкретного датчика по адресу в матрице
 static inline uint16_t ec_sw_scan(uint8_t mux, uint8_t col_physical, uint8_t row) {
@@ -122,7 +119,7 @@ void ec_floor_sample(void) {
     for (uint8_t count = 0; count < FLOOR_LEVEL_SAMPLING_COUNT; count++) {
         for (uint8_t col = 0; col < MATRIX_COLS; col++) {
             for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
-                raw_adc_readings = ec_sw_scan(col, row);
+                raw_adc_readings = ec_sw_scan(1, col, row);
                 if (raw_adc_readings > runtime_config.floor_level_per_key[col][row]) {
                     runtime_config.floor_level_per_key[col][row] = raw_adc_readings;
                 }
@@ -135,7 +132,7 @@ void ec_floor_sample(void) {
 bool ec_matrix_scan(matrix_row_t current_matrix[]) {
     bool has_changed = false;
     for (uint8_t mux = 0; mux < MUX_COUNT; mux++) {
-        mux_disable_unused();
+        mux_disable_unused(mux);
         // mux_enable_current();
         uint8_t col_offset = 0;
         for (uint8_t col_physical = 0; col_physical < mux_current_capacity[mux]; col_physical++) {
@@ -150,12 +147,12 @@ bool ec_matrix_scan(matrix_row_t current_matrix[]) {
                     continue;
                 }
 #endif
-                switch (runtime_config.kb_current_operation_mode) {
-                    uint16_t raw_adc_readings = ec_sw_scan(mux, col_physical, row);
+                uint16_t raw_adc_readings = ec_sw_scan(mux, col_physical, row);
 
+                switch (runtime_config.kb_current_operation_mode) {
                     // Нормальная работа
                     case 0:
-                        log_matrix[col][row] = raw_adc_readings; // Логирования сканирований
+                        log_matrix[col_matrix][row] = raw_adc_readings; // Логирования сканирований
 
                         if (raw_adc_readings <= runtime_config.floor_level_per_key[col_matrix][row]) {
                             break;
