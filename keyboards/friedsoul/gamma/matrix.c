@@ -77,14 +77,8 @@ static inline void ec_sw_discharge(uint8_t row) {
 
 // Включает выбранный мультиплексор, отключает остальные
 static inline void mux_enable_current(uint8_t current_mux) {
-    for (uint8_t i = 0; i < MUX_COUNT; i++) {
-        if (i == current_mux) {
-            gpio_write_pin_low(mux_en_pins[i]);
-            gpio_set_pin_output(mux_en_pins[i]);
-        }
-        gpio_write_pin_high(mux_en_pins[i]);
-        gpio_set_pin_output(mux_en_pins[i]);
-    }
+    gpio_write_pin_low(mux_en_pins[current_mux]);
+    gpio_set_pin_output(mux_en_pins[current_mux]);
 }
 
 // Отключается все мультиплексоры
@@ -106,7 +100,7 @@ static inline void mux_channel_select(uint8_t mux, uint8_t col_logical) {
     }
 
     mux_enable_current(mux);
-    //wait_us(5); // Чутка ждем для стабилизации уровня (Надо протестировать, нужно ли вообще)
+    wait_us(2); // Чутка ждем для стабилизации уровня (Надо протестировать, нужно ли вообще)
 }
 
 // Сканирование конкретного датчика по адресу в матрице
@@ -117,12 +111,14 @@ static inline uint16_t ec_sw_scan(uint8_t row) {
     gpio_set_pin_input(DISCHARGE_PIN);
 
     gpio_write_pin_high(row_pins[row]);
-    raw_adc_readings = analogReadPin(ANALOG_READINGS_INPUT);
+    raw_adc_readings = analogReadPin(ANALOG_READINGS_INPUT); // Возможно стоит сделать атомарный блок для сканирования + еще поработать над логикой для минимизации шума
 
     gpio_write_pin_low(DISCHARGE_PIN);
     gpio_set_pin_output(DISCHARGE_PIN);
 
     wait_us(DISCHARGE_TIME_US);
+
+    // uprintf("Row %d: %d\n", row, raw_adc_readings);
 
     return raw_adc_readings;
 }
@@ -134,8 +130,8 @@ static inline void ec_floor_sample(void) {
 
     for (uint8_t count = 0; count < FLOOR_LEVEL_SAMPLING_COUNT; count++) {
         for (uint8_t mux = 0; mux < MUX_COUNT; mux++) {
-            uint8_t col_offset = 0;
             for (uint8_t col_logical = 0; col_logical < mux_current_capacity[mux]; col_logical++) {
+                uint8_t col_offset = 0;
                 for (uint8_t i = 0; i < mux; i++) {
                     col_offset += mux_current_capacity[i]; // Вычисляем смещение для col_matrix на основе текущей емкости мультиплексора (Для 0 мультиплексора смещения нет)
                 }
@@ -164,9 +160,8 @@ bool ec_matrix_scan(matrix_row_t current_matrix[]) {
     bool     has_changed      = false;
     uint16_t raw_adc_readings = 0;
     for (uint8_t mux = 0; mux < MUX_COUNT; mux++) {
-        uint8_t col_offset = 0;
-
         for (uint8_t col_logical = 0; col_logical < mux_current_capacity[mux]; col_logical++) {
+            uint8_t col_offset = 0;
             for (uint8_t i = 0; i < mux; i++) {
                 col_offset += mux_current_capacity[i]; // Вычисляем смещение для col_matrix на основе текущей емкости мультиплексора (Для 0 мультиплексора смещения нет)
             }
@@ -243,29 +238,6 @@ bool ec_matrix_scan(matrix_row_t current_matrix[]) {
     return has_changed;
 }
 
-bool ec_matrix_scan_test(matrix_row_t current_matrix[]) {
-    uint16_t raw_adc_readings = 0;
-    for (uint8_t mux = 0; mux < MUX_COUNT; mux++) {
-        uint8_t col_offset = 0;
-
-        for (uint8_t col_logical = 0; col_logical < mux_current_capacity[mux]; col_logical++) {
-            for (uint8_t i = 0; i < mux; i++) {
-                col_offset += mux_current_capacity[i]; // Вычисляем смещение для col_matrix на основе текущей емкости мультиплексора (Для 0 мультиплексора смещения нет)
-            }
-            uint8_t col_matrix = col_logical + col_offset;
-
-            mux_channel_select(mux, col_logical); // Переключаем канал мультиплексора
-
-            for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
-                raw_adc_readings            = ec_sw_scan(row);
-            }
-            uprintf("Col matrix %d:, %d\n", col_matrix, raw_adc_readings);
-        }
-    }
-
-    return true;
-}
-
 // Инициализация матрицы СТАНДАРТНАЯ
 void matrix_init_custom(void) {
     adc_int();
@@ -276,31 +248,8 @@ void matrix_init_custom(void) {
 
 // Сканирование матрицы СТАНДАРТНАЯ
 bool matrix_scan_custom(matrix_row_t current_matrix[]) {
+    bool matrix_has_changed = ec_matrix_scan(current_matrix);
 
-    bool matrix_has_changed = true; //ec_matrix_scan_test(current_matrix);
-
-    for (uint8_t pin = 0; pin < (sizeof(mux_en_pins) / mux_en_pins[0]); pin++) {
-    
-        gpio_write_pin_high(mux_en_pins[pin]);
-        gpio_set_pin_output(mux_en_pins[pin]);
-    }
-    for (uint8_t pin = 0; pin < (sizeof(mux_sel_pins) / mux_sel_pins[0]); pin++) {
-
-        gpio_write_pin_low(mux_sel_pins[pin]);
-        gpio_set_pin_output(mux_sel_pins[pin]);
-    }
-
-    gpio_write_pin_low(DISCHARGE_PIN);
-    gpio_set_pin_output(DISCHARGE_PIN);
-
-    for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
-        gpio_write_pin_low(row_pins[row]);
-        gpio_set_pin_output(row_pins[row]);
-    }
-    
-    uint16_t readings = analogReadPin(ANALOG_READINGS_INPUT);
-    
-    uprintf("Scanned: %d\n", readings);
-    //logger();
+    logger();
     return matrix_has_changed;
 }

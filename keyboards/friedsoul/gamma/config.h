@@ -31,8 +31,8 @@
 
 #define FLOOR_LEVEL_SAMPLING_COUNT 50
 
-#define DEFAULT_ACTUATION_LEVEL 100
-#define DEFAULT_RELEASE_LEVEL 50
+#define DEFAULT_ACTUATION_LEVEL 500
+#define DEFAULT_RELEASE_LEVEL 450
 #define DEFAULT_CEILING_LEVEL 1023
 
 #define DEFAULT_CONSOLE_LOG_STATUS 0       // 0 - Выключено,  1 - Данные порогов матрицы, 2 - Данные сканирования, 3 - размер eeprom_config и данные runtime_config, 4 - Данные SOCD пар
