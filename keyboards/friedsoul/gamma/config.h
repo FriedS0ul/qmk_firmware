@@ -5,7 +5,7 @@
 #define MATRIX_COLS 14 // Количество колонок матрицы
 #define MATRIX_ROWS 5  // Количество рядов матрицы
 
-//#define UNUSED_ADRESSES { {3, 4}, {4, 4}, {7, 4}, {8, 4} } // Тут адреса датчиков в матрице, которые физически не присутствуют на плате
+#define UNUSED_ADRESSES { {3, 4}, {4, 4}, {7, 4}, {8, 4} }
 
 // МУЛЬТИПЛЕКСОРЫ
 #define MUX_COUNT 2
@@ -29,10 +29,12 @@
 // ЫЫЫЫ ЦЫФЕРКИ (Не изменяй, если не знаешь, что они делают)
 #define DISCHARGE_TIME_US 10
 
+#define DEFAULT_BUILT_IN_OPAMP_MULTIPLIER 1
+
 #define FLOOR_LEVEL_SAMPLING_COUNT 50
 
-#define DEFAULT_ACTUATION_LEVEL 500
-#define DEFAULT_RELEASE_LEVEL 450
+#define DEFAULT_ACTUATION_LEVEL 700
+#define DEFAULT_RELEASE_LEVEL 680
 #define DEFAULT_CEILING_LEVEL 1023
 
 #define DEFAULT_CONSOLE_LOG_STATUS 0       // 0 - Выключено,  1 - Данные порогов матрицы, 2 - Данные сканирования, 3 - размер eeprom_config и данные runtime_config, 4 - Данные SOCD пар
@@ -40,4 +42,4 @@
 
 #define DEFAULT_SOCD_KEY 0 // Какая клавиша будет считаться нажатой последней, если в одном цикле сканирования матрицы было зарегистрировано нажатие обеих
 #define FIRMWARE_LEVEL_NUMBER 1
-#define EECONFIG_KB_DATA_SIZE 256
+#define EECONFIG_KB_DATA_SIZE 162
