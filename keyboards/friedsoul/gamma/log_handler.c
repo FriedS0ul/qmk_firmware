@@ -64,7 +64,7 @@ void logger(void) {
 
                 case 5:
 
-                    uprintf("PAIR 0 last pressed: %d\n", (runtime_config.socd_pair_0_flags_bits >> bits_pressed_last) & 1);
+                    uprintf("COL 0 ROW 0: %u\n", log_matrix[0][0]);
                     break;
 
                 default:

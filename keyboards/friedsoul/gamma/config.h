@@ -5,7 +5,7 @@
 #define MATRIX_COLS 14 // Количество колонок матрицы
 #define MATRIX_ROWS 5  // Количество рядов матрицы
 
-#define UNUSED_ADRESSES { {3, 4}, {4, 4}, {7, 4}, {8, 4} }
+//#define UNUSED_ADRESSES { {3, 4}, {4, 4}, {7, 4}, {8, 4} }
 
 // МУЛЬТИПЛЕКСОРЫ
 #define MUX_COUNT 2

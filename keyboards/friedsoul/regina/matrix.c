@@ -49,10 +49,8 @@ static inline uint16_t ec_sw_scan(uint8_t col, uint8_t row) {
     gpio_set_pin_input(DISCHARGE_PIN);
 
     gpio_write_pin_high(row_pins[row]);
-    // ec_sw_charge(row);
     raw_adc_readings = analogReadPin(ANALOG_READINGS_INPUT); // Возможно стоит сделать атомарный блок для сканирования + еще поработать над логикой для минимизации шума
 
-    // ec_sw_discharge(row);
     gpio_write_pin_low(DISCHARGE_PIN);
     gpio_set_pin_output(DISCHARGE_PIN);
 
