@@ -5,7 +5,7 @@
 #define MATRIX_COLS 14 // Количество колонок матрицы
 #define MATRIX_ROWS 5  // Количество рядов матрицы
 
-//#define UNUSED_ADRESSES { {3, 4}, {4, 4}, {7, 4}, {8, 4} }
+#define UNUSED_ADRESSES { {3, 4}, {4, 4}, {7, 4}, {8, 4} }
 
 // МУЛЬТИПЛЕКСОРЫ
 #define MUX_COUNT 2
@@ -38,7 +38,7 @@
 #define DEFAULT_CEILING_LEVEL 1023
 
 #define DEFAULT_CONSOLE_LOG_STATUS 0       // 0 - Выключено,  1 - Данные порогов матрицы, 2 - Данные сканирования, 3 - размер eeprom_config и данные runtime_config, 4 - Данные SOCD пар
-#define DEFAULT_CONSOLE_LOG_FREQUENCY 5000 // Раз в сколько полных сканирований матрицы данные будут выводится в консоль. Частота зависит от размера матрица. Рекомендую не ниже 1000
+#define DEFAULT_CONSOLE_LOG_FREQUENCY 10000 // Раз в сколько полных сканирований матрицы данные будут выводится в консоль. Частота зависит от размера матрица. Рекомендую не ниже 1000
 
 #define DEFAULT_SOCD_KEY 0 // Какая клавиша будет считаться нажатой последней, если в одном цикле сканирования матрицы было зарегистрировано нажатие обеих
 #define FIRMWARE_LEVEL_NUMBER 1

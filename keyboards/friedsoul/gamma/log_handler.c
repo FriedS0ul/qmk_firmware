@@ -25,7 +25,7 @@ void logger(void) {
                     uprintf("\r\n");
                     for (uint8_t col = 0; col < MATRIX_COLS; col++) {
                         for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
-                            uprintf("COL %d ROW %d: %u", col, row, log_matrix[col][row]);
+                            uprintf("COL %d ROW %d: %u \n", col, row, log_matrix[col][row]);
                             uprintf("\r\n");
                         }
                     }
