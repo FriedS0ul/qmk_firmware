@@ -50,11 +50,11 @@ void pins_init(void) {
 
 // Выставляем управляющие пины мультиплексора
 void mux_init(void) {
-    for (uint8_t pin = 0; pin < (sizeof(mux_en_pins) / mux_en_pins[0]); pin++) {
+    for (uint8_t pin = 0; pin < (sizeof(mux_en_pins) / sizeof(mux_en_pins[0])); pin++) {
         gpio_set_pin_output(mux_en_pins[pin]);
         gpio_write_pin_high(mux_en_pins[pin]);
     }
-    for (uint8_t pin = 0; pin < (sizeof(mux_sel_pins) / mux_sel_pins[0]); pin++) {
+    for (uint8_t pin = 0; pin < (sizeof(mux_sel_pins) / sizeof(mux_sel_pins[0])); pin++) {
         gpio_set_pin_output(mux_sel_pins[pin]);
         gpio_write_pin_low(mux_sel_pins[pin]);
     }
@@ -96,7 +96,7 @@ void mux_channel_select(uint8_t mux, uint8_t col_logical) {
         gpio_write_pin(mux_sel_pins[pin], (channel >> pin) & 1);
     }
 
-    mux_enable_current(mux_en_pins[mux]);
+    mux_enable_current(mux);
     wait_us(5);
 }
 
@@ -114,8 +114,6 @@ uint16_t ec_sw_scan(uint8_t row) {
     gpio_set_pin_output(DISCHARGE_PIN);
 
     wait_us(DISCHARGE_TIME_US);
-    uprintf("Row %d: %d", row, raw_adc_readings);
-    uprintf("\r\n");
     return raw_adc_readings;
 }
 
@@ -222,28 +220,14 @@ bool ec_matrix_scan(matrix_row_t current_matrix[]) {
                         break;
                 }
             }
-        }
+        }s
     }
 
-    runtime_config.socd_pair_0_flags_bits = socd_perform_pair(current_matrix, &runtime_config.socd_pair_0, runtime_config.socd_pair_0_flags_bits);
-    runtime_config.socd_pair_1_flags_bits = socd_perform_pair(current_matrix, &runtime_config.socd_pair_1, runtime_config.socd_pair_1_flags_bits);
-    runtime_config.socd_pair_2_flags_bits = socd_perform_pair(current_matrix, &runtime_config.socd_pair_2, runtime_config.socd_pair_2_flags_bits);
+    //runtime_config.socd_pair_0_flags_bits = socd_perform_pair(current_matrix, &runtime_config.socd_pair_0, runtime_config.socd_pair_0_flags_bits);
+    //runtime_config.socd_pair_1_flags_bits = socd_perform_pair(current_matrix, &runtime_config.socd_pair_1, runtime_config.socd_pair_1_flags_bits);
+    //runtime_config.socd_pair_2_flags_bits = socd_perform_pair(current_matrix, &runtime_config.socd_pair_2, runtime_config.socd_pair_2_flags_bits);
 
     return has_changed;
-}
-
-// Функция сканирования и обновления current matrix
-bool ec_matrix_scan_test(matrix_row_t current_matrix[]) {
-
-    gpio_write_pin_low(mux_en_pins[0]);
-
-    gpio_write_pin_low(mux_sel_pins[0]);
-    gpio_write_pin_high(mux_sel_pins[1]);
-    gpio_write_pin_low(mux_sel_pins[2]);
-
-    ec_sw_scan(0);
-
-    return true;
 }
 
 // Инициализация матрицы СТАНДАРТНАЯ
@@ -251,13 +235,13 @@ void matrix_init_custom(void) {
     adc_init();
     pins_init();
     mux_init();
-    // ec_floor_sample();
+    ec_floor_sample();
 }
 
 // Сканирование матрицы СТАНДАРТНАЯ
 bool matrix_scan_custom(matrix_row_t current_matrix[]) {
-    bool matrix_has_changed = ec_matrix_scan_test(current_matrix);
+    bool matrix_has_changed = ec_matrix_scan(current_matrix);
 
-    // logger();
+    logger();
     return matrix_has_changed;
 }
