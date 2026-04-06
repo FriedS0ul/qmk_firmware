@@ -103,7 +103,7 @@ void mux_channel_select(uint8_t mux, uint8_t col_logical) {
 uint16_t ec_sw_scan(uint8_t row) {
     uint16_t raw_adc_readings = 0;
 
-    gpio_write_pin_low(row_pins[row]);
+    //gpio_write_pin_low(row_pins[row]);
     gpio_set_pin_input(DISCHARGE_PIN);
 
     gpio_write_pin_high(row_pins[row]);
@@ -111,6 +111,7 @@ uint16_t ec_sw_scan(uint8_t row) {
 
     gpio_write_pin_low(DISCHARGE_PIN);
     gpio_set_pin_output(DISCHARGE_PIN);
+    gpio_write_pin_low(row_pins[row]);
 
     wait_us(DISCHARGE_TIME_US);
     return raw_adc_readings;
@@ -219,7 +220,7 @@ bool ec_matrix_scan(matrix_row_t current_matrix[]) {
                         break;
                 }
             }
-        }s
+        }
     }
 
     runtime_config.socd_pair_0_flags_bits = socd_perform_pair(current_matrix, &runtime_config.socd_pair_0, runtime_config.socd_pair_0_flags_bits);
