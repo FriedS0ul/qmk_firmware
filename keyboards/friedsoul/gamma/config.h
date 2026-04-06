@@ -5,41 +5,41 @@
 #define MATRIX_COLS 14 // Количество колонок матрицы
 #define MATRIX_ROWS 5  // Количество рядов матрицы
 
-#define UNUSED_ADRESSES { {3, 4}, {4, 4}, {7, 4}, {8, 4} }
+#define UNUSED_ADRESSES {{3, 4}, {4, 4}, {7, 4}, {8, 4}} // Адреса, которые физически отсутствуют на плате
 
 // МУЛЬТИПЛЕКСОРЫ
 #define MUX_COUNT 2
 #define MUX_MAX_CAPACITY 8
-#define MUX_CURRENT_CAPACITY { 8, 6 }
+#define MUX_CURRENT_CAPACITY {8, 6}
 
-#define MUX_EN_PINS { B5, B7 }
-#define MUX_SEL_PINS { A15, B3, B4 }
+#define MUX_EN_PINS {B5, B7}
+#define MUX_SEL_PINS {A15, B3, B4}
 
-#define MUX_0_CHANNELS_IN_LOGICAL_ORDER { 2, 1, 0, 4, 6, 7, 5, 3 } // Тут каналы мультиплексора по порядку подключения к ним столбцов матрицы. То есть столбец 0 - канал 2, столбец 1 - канал 1 и так далее.
-#define MUX_1_CHANNELS_IN_LOGICAL_ORDER { 5, 4, 2, 1, 0, 3 }
+#define MUX_0_CHANNELS_IN_LOGICAL_ORDER {2, 1, 0, 4, 6, 7, 5, 3} // Тут каналы мультиплексора по порядку подключения к ним столбцов матрицы. То есть столбец 0 - канал 2, столбец 1 - канал 1 итд.
+#define MUX_1_CHANNELS_IN_LOGICAL_ORDER {5, 4, 2, 1, 0, 3}
 #define MUX_CHANNELS_IN_LOGICAL_ORDER MUX_0_CHANNELS_IN_LOGICAL_ORDER, MUX_1_CHANNELS_IN_LOGICAL_ORDER
 
 // ПИНЫ
-#define MATRIX_ROW_PINS { A10, A9, A8, B15, A4 } // Пины рядов матрицы
+#define MATRIX_ROW_PINS {A10, A9, A8, B15, A4} // Пины рядов матрицы
 
 #define DISCHARGE_PIN A5 // Пин разрядки COM линии
 
 #define ANALOG_READINGS_INPUT B2 // Аналоговый пин на АЦП контроллера
 
-// ЫЫЫЫ ЦЫФЕРКИ (Не изменяй, если не знаешь, что они делают)
+// ДЕФОЛТНЫЕ ЗНАЧЕНИЯ
 #define DISCHARGE_TIME_US 10
-
-#define DEFAULT_BUILT_IN_OPAMP_MULTIPLIER 1
 
 #define FLOOR_LEVEL_SAMPLING_COUNT 50
 
-#define DEFAULT_ACTUATION_LEVEL 700
-#define DEFAULT_RELEASE_LEVEL 680
-#define DEFAULT_CEILING_LEVEL 1023
+#define DEFAULT_ACTUATION_LEVEL 700 // Уровень нажатия
+#define DEFAULT_RELEASE_LEVEL 680   // Уровень отпускания
+#define DEFAULT_FLOOR_LEVEL 0       // Минимальный уровень
+#define DEFAULT_CEILING_LEVEL 1023  // Максимальный уровень
 
 #define DEFAULT_CONSOLE_LOG_STATUS 0       // 0 - Выключено,  1 - Данные порогов матрицы, 2 - Данные сканирования, 3 - размер eeprom_config и данные runtime_config, 4 - Данные SOCD пар
-#define DEFAULT_CONSOLE_LOG_FREQUENCY 10000 // Раз в сколько полных сканирований матрицы данные будут выводится в консоль. Частота зависит от размера матрица. Рекомендую не ниже 1000
+#define DEFAULT_CONSOLE_LOG_FREQUENCY 5000 // Раз в сколько полных сканирований матрицы данные будут выводится в консоль. Частота зависит от размера матрица. Рекомендую не ниже 1000
 
 #define DEFAULT_SOCD_KEY 0 // Какая клавиша будет считаться нажатой последней, если в одном цикле сканирования матрицы было зарегистрировано нажатие обеих
+
 #define FIRMWARE_LEVEL_NUMBER 1
-#define EECONFIG_KB_DATA_SIZE 162
+#define EECONFIG_KB_DATA_SIZE 162 // Размер eeprom (Проверь через лог eeprom_config)

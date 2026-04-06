@@ -75,7 +75,7 @@ void ec_sw_discharge(uint8_t row) {
     wait_us(DISCHARGE_TIME_US);
 }
 
-// Включает выбранный мультиплексор, отключает остальные
+// Включает выбранный мультиплексор
 void mux_enable_current(uint8_t current_mux) {
     gpio_write_pin_low(mux_en_pins[current_mux]);
 }
@@ -97,7 +97,6 @@ void mux_channel_select(uint8_t mux, uint8_t col_logical) {
     }
 
     mux_enable_current(mux);
-    wait_us(5);
 }
 
 // Сканирование конкретного датчика по адресу в матрице
@@ -223,9 +222,9 @@ bool ec_matrix_scan(matrix_row_t current_matrix[]) {
         }s
     }
 
-    //runtime_config.socd_pair_0_flags_bits = socd_perform_pair(current_matrix, &runtime_config.socd_pair_0, runtime_config.socd_pair_0_flags_bits);
-    //runtime_config.socd_pair_1_flags_bits = socd_perform_pair(current_matrix, &runtime_config.socd_pair_1, runtime_config.socd_pair_1_flags_bits);
-    //runtime_config.socd_pair_2_flags_bits = socd_perform_pair(current_matrix, &runtime_config.socd_pair_2, runtime_config.socd_pair_2_flags_bits);
+    runtime_config.socd_pair_0_flags_bits = socd_perform_pair(current_matrix, &runtime_config.socd_pair_0, runtime_config.socd_pair_0_flags_bits);
+    runtime_config.socd_pair_1_flags_bits = socd_perform_pair(current_matrix, &runtime_config.socd_pair_1, runtime_config.socd_pair_1_flags_bits);
+    runtime_config.socd_pair_2_flags_bits = socd_perform_pair(current_matrix, &runtime_config.socd_pair_2, runtime_config.socd_pair_2_flags_bits);
 
     return has_changed;
 }
