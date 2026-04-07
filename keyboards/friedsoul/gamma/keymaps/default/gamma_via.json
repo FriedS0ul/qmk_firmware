@@ -359,10 +359,26 @@
     ],
     "layouts": {
         "labels": [
-            "Split Backspace",
-            "ISO Enter",
-            "Stepped CapsLock",
-            "ISO Shift",
+            [
+                "Backspace",
+                "Unified",
+                "Split"
+            ],
+            [
+                "Enter",
+                "ANSI",
+                "ISO"
+            ],
+            [
+                "CapsLock",
+                "Regular",
+                "Stepped"
+            ],
+            [
+                "Left Shift",
+                "Unified",
+                "Split"
+            ],
             [
                 "Right Shift",
                 "Split 1.75u-1u",
